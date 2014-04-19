@@ -54,10 +54,8 @@ else {
 
 
         // Load nconf files or fail
-
-        nconf.add('data', {type: 'memory'});
-        var readData = require('./public/data/test.json');
-        nconf.use('data').set('servers:', readData.servers);
+        nconf.add('data', {type: 'file', file: './public/data/test.json', loadSync: true });
+        nconf.use('data').set('lock', false);
 
         // Bind express and begin setting up the environment
         var app = express();
@@ -94,5 +92,9 @@ else {
             console.log('Express server listening on port ' + app.get('port'));
             }
         );
+
+        setTimeout(function() {
+            api.saveToDisk(0);
+        }, 300000);
     }
 }

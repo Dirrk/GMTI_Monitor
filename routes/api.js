@@ -8,6 +8,7 @@
  */
 
 var nconf = require('nconf');
+var numUpdates = 0;
 // var data = nconf.use('data');
 
 // app.post('/api/update', api.update);
@@ -26,6 +27,10 @@ exports.update = function(req, res) {
         memUsed = parseInt(data.used || "0");
         memTotal = parseInt(data.total || "0");
         res.send(200);
+        numUpdates++;
+        if ((numUpdates % 50) === 0) {
+            saveToDisk(0);
+        }
 
     } catch (e) {
         res.send(500);
@@ -39,8 +44,74 @@ exports.update = function(req, res) {
     addServerData(server, cpu, mem);
 };
 
-function addServerData(server, cpu, mem) {
+function addServerData(server, cpu, mem, count) {
 
-//    data
+    var data = nconf.use('data');
 
+    if (data.get('lock') === false || count >= 5)
+    {
+        data.set('lock', true);
+        var servers = data.get('servers'),
+            iterator,
+            found;
+
+        for(iterator = 0, found = servers.length; iterator < servers.length; iterator++)
+        {
+
+            if (servers[iterator].server == server)
+            {
+                found = iterator;
+            }
+        }
+        if (found === servers.length)
+        {
+            servers.push(
+                {
+                    server: server,
+                    data: []
+                }
+            );
+        }
+        servers[found].data.push(
+            {
+                time: new Date().getTime(),
+                cpu: cpu || 0.00,
+                mem: mem || 0.00
+            }
+        );
+
+        data.set('servers', servers);
+        data.set('lock', false);
+    } else {
+        count = count || 0;
+        count++;
+        setTimeout(function() {
+            addServerData(server, cpu, mem, count);
+        }, Math.floor(Math.random() * 100))
+    }
+}
+
+var saveToDisk = exports.saveToDisk = function saveToDisk (count) {
+
+    var data = nconf.use('data');
+    var count = count || 0;
+    count++;
+
+    if (data.get('lock') === false || count >= 5)
+    {
+        data.set('lock', true);
+
+        data.save(function(err) {
+            if (err) {
+                console.log(err);
+            }
+            data.set('lock', false);
+
+        });
+
+    } else {
+        setTimeout(function() {
+            saveToDisk(count);
+        }, Math.floor(Math.random() * 100))
+    }
 }

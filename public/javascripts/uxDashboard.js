@@ -16,6 +16,8 @@ function safeHandler($) {
 
         $.get('/api/noc/ux').success( function( jdata ) {
 
+            console.log(jdata);
+
             if (jdata && jdata.length > 0) {
 
                 var barData = loadBarData(jdata);
