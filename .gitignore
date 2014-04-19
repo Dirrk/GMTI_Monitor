@@ -1,0 +1,4 @@
+#Ignore node mods
+node_modules/*
+.idea/*
+ignore/*
