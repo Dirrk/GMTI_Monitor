@@ -53,7 +53,8 @@ function addServerData(server, cpu, mem, count) {
         data.set('lock', true);
         var servers = data.get('servers'),
             iterator,
-            found;
+            found,
+            temp = [];
 
         for(iterator = 0, found = servers.length; iterator < servers.length; iterator++)
         {
@@ -80,6 +81,11 @@ function addServerData(server, cpu, mem, count) {
             }
         );
 
+        while (servers[found].data.length > 30)
+        {
+            servers[found].data.shift();
+        }
+
         data.set('servers', servers);
         data.set('lock', false);
     } else {
@@ -101,6 +107,8 @@ var saveToDisk = exports.saveToDisk = function saveToDisk (count) {
     {
         data.set('lock', true);
 
+        cleanUpData();
+
         data.save(function(err) {
             if (err) {
                 console.log(err);
@@ -115,3 +123,40 @@ var saveToDisk = exports.saveToDisk = function saveToDisk (count) {
         }, Math.floor(Math.random() * 100))
     }
 };
+
+function cleanUpData() {
+    var data = data = nconf.use('data');
+    var servers = data.get('servers');
+    var toRemove = [];
+
+    for(var i = 0; i < servers.length; i++)
+    {
+        var temp = servers[i].data;
+        var done = false;
+
+        while (done !== true)
+        {
+            if (temp.length > 0)
+            {
+                if (temp[0].time <= (new Date().getTime() - 3600000))
+                {
+                    servers[i].data.shift();
+                } else {
+                    done = true;
+                }
+
+            } else {
+                done = true;
+            }
+        }
+        if (servers[i].data.length == 0)
+        {
+            toRemove.push(i);
+        }
+    }
+    for (var k = 0; k < toRemove.length; k++)
+    {
+        servers.splice(toRemove[k], 1);
+    }
+    data.set('servers', servers);
+}

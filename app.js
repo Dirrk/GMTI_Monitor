@@ -54,7 +54,7 @@ else {
 
 
         // Load nconf files or fail
-        nconf.add('data', {type: 'file', file: './public/data/test.json', loadSync: true });
+        nconf.add('data', {type: 'file', file: './public/data/data.json', loadSync: true });
         nconf.use('data').set('lock', false);
 
         // Bind express and begin setting up the environment
