@@ -10,9 +10,16 @@ function safeHandler($) {
 
     "use strict";
 
+    // run at start
     loadUXBar($);
 
+    // global
     var currentData;
+
+    // static
+    var CPU_COLOR = "#00B7FF",
+        MEM_COLOR = "#FFB700";
+
 
 
 
@@ -47,7 +54,7 @@ function safeHandler($) {
     function loadBarData(input) {
         var cpuBars = {
             data: [],
-            color: "#00B7FF",
+            color: CPU_COLOR,
             label: "CPU",
             bars: {
                 show: true,
@@ -58,7 +65,7 @@ function safeHandler($) {
         };
        var memBars = {
            data: [],
-           color: "#FFB700",
+           color: MEM_COLOR,
            label: "Memory",
            bars: {
                show: true,
@@ -125,7 +132,50 @@ function safeHandler($) {
         }
     };
 
-    function loadSingleTimeData(input) {};
+    function loadSingleTimeData(input) {
+        var cpuLine = {
+            label: "CPU",
+            data: [],
+            color: CPU_COLOR
+        };
+        var memLine = {
+            label: "Memory",
+            data: [],
+            color: MEM_COLOR
+        };
+
+        for (var i = 0; i < input.data.length; i++)
+        {
+            cpuLine.data.push([input.data[i].time, input.data[i].cpu]);
+            memLine.data.push([input.data[i].time, input.data[i].mem]);
+        }
+
+        var data = [cpuLine, memLine];
+        var options = {
+            grid: {
+                  hoverable: true
+            },
+            xaxis: {
+                   mode: "time",
+                   timezone: "browser",
+                   timeformat: "%H:%M:%S"
+            },
+            lines: {
+                   show: true
+            },
+            points: {
+                    show: true
+            },
+            tooltip: true,
+            tooltipOpts: {
+                content: "%y.2%"
+            }
+        };
+        return {
+            data: data,
+            options: options
+        };
+    };
 
     function loadUXTime($) {
         // load uxTime
