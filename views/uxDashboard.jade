@@ -1,0 +1,24 @@
+//
+   Created by Derek Rada on 4/18/2014.
+extends layout
+block append style
+    link(rel='stylesheet', href='/stylesheets/uilayout.css')
+    link(rel='stylesheet', href='/stylesheets/noc.css')
+
+block append header
+    h1 MOC UX Layer
+    p nginx/uWSGI front end servers.  CPU Data
+
+block append content
+    #flot-container
+        #cpubar.flotFullWShortH
+        // #cputime.flotFullWShortH
+
+block append footer
+    p This information is up to 2 minutes old.
+
+block append scripts
+    script(type='text/javascript', src='/javascripts/flot/jquery.min.js')
+    script(type='text/javascript', src='/javascripts/flot/jquery.flot.min.js')
+    script(type='text/javascript', src='/javascripts/flot/jquery.flot.orderBars.js')
+    script(type='text/javascript', src='/javascripts/uxDashboard.js')
