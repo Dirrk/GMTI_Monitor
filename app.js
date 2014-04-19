@@ -95,6 +95,6 @@ else {
 
         setTimeout(function() {
             api.saveToDisk(0);
-        }, 300000);
+        }, 120000);
     }
 }

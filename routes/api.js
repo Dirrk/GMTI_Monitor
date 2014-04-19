@@ -141,6 +141,7 @@ function cleanUpData() {
                 if (temp[0].time <= (new Date().getTime() - 3600000))
                 {
                     servers[i].data.shift();
+                    temp.shift();
                 } else {
                     done = true;
                 }
@@ -153,6 +154,7 @@ function cleanUpData() {
         {
             toRemove.push(i);
         }
+
     }
     for (var k = 0; k < toRemove.length; k++)
     {
