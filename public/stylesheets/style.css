@@ -1,5 +1,7 @@
 body {
   font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
+  color: white;
+  background-color: #282828;
 }
 a {
   color: #00b7ff;
@@ -17,4 +19,7 @@ a {
 .layout-wrapper-footer {
   position: relative;
   bottom: 0px;
+}
+.hidden {
+  display: none;
 }

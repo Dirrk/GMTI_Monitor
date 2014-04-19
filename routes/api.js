@@ -9,6 +9,8 @@
 
 var nconf = require('nconf');
 var numUpdates = 0;
+var debug = true;
+
 // var data = nconf.use('data');
 
 // app.post('/api/update', api.update);
@@ -125,7 +127,10 @@ var saveToDisk = exports.saveToDisk = function saveToDisk (count) {
 };
 
 function cleanUpData() {
-    var data = data = nconf.use('data');
+
+    if (debug) { return };
+
+    var data = nconf.use('data');
     var servers = data.get('servers');
     var toRemove = [];
 

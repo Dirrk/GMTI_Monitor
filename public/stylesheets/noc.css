@@ -1,4 +1,7 @@
 .layout-wrapper-content {
-  background-color: #f3f3f3;
+  background-color: #282828;
   border-radius: 15px;
+}
+.flot-x-axis .flot-tick-label {
+  color: #282828;
 }

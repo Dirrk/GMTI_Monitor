@@ -1,8 +1,12 @@
 @c-gray: #f3f3f3;
 @c-blue: #00B7FF;
+@bg-black: #282828;
+@c-black: #131313;
 
 body {
   font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
+  color: white;
+  background-color: @bg-black;
 }
 
 a {
@@ -11,7 +15,8 @@ a {
 .layout-wrapper
 {
   margin: 0 auto 0 auto;
-  width: 80%
+  width: 80%;
+
 }
 .layout-wrapper-header {
   margin-top: 1em;
@@ -22,4 +27,8 @@ a {
 .layout-wrapper-footer {
   position: relative;
   bottom: 0px;
+}
+.hidden
+{
+  display: none;
 }

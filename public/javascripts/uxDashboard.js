@@ -12,6 +12,10 @@ function safeHandler($) {
 
     loadUXBar($);
 
+    var currentData;
+
+
+
     function loadUXBar($) {
 
         $.get('/api/noc/ux').success( function( jdata ) {
@@ -20,14 +24,25 @@ function safeHandler($) {
 
             if (jdata && jdata.length > 0) {
 
+                currentData = jdata;
                 var barData = loadBarData(jdata);
                 console.log(barData);
 
-                $.plot($("#cpubar"), barData.data, barData.options);
+                var plot = $.plot($("#cpubar"), barData.data, barData.options);
+
+                $("#cpubar").bind("plotclick", function (event, pos, item) {
+                    if (item)
+                    {
+                        plot.highlight(item.series, item.datapoint);
+                        loadDrillDown(item);
+                        setTimeout(function() { plot.unhighlight(item.series, item.datapoint) }, 1000);
+                    }
+                });
+
             }
         });
+        setTimeout(function() { loadUXBar($); }, 30000);
     }
-
 
     function loadBarData(input) {
         var cpuBars = {
@@ -37,7 +52,7 @@ function safeHandler($) {
             bars: {
                 show: true,
                 align: 'center',
-                barWidth: 0.2,
+                barWidth:.25,
                 order: 1
             }
         };
@@ -48,7 +63,7 @@ function safeHandler($) {
            bars: {
                show: true,
                align: 'center',
-               barWidth: 0.2,
+               barWidth:.25,
                order: 2
            }
        };
@@ -71,9 +86,17 @@ function safeHandler($) {
             }
         }
         var opt = {
+            grid: {
+                hoverable: true,
+                clickable: true
+            },
             xaxis: {
                    ticks: ticks,
                    tickLength: 0
+            },
+            tooltip: true,
+            tooltipOpts: {
+                         content: "%s for %x was %y.2%"
             }
         };
         var ret = {
@@ -85,6 +108,24 @@ function safeHandler($) {
         };
         return ret;
     }
+
+    function loadDrillDown(item) {
+
+        if (item.dataIndex < currentData.length)
+        {
+            var server = currentData[item.dataIndex];
+            console.log(server);
+            // #drillDownHolder
+            $("#drilldownModal").show();
+            $("#drilldownModal").css('opacity', 0.95);
+            $("#drillDownTitle").text("Server: " + server.server);
+
+            var timeData = loadSingleTimeData(server);
+            $.plot($("#drillDownHolder"), timeData.data, timeData.options);
+        }
+    };
+
+    function loadSingleTimeData(input) {};
 
     function loadUXTime($) {
         // load uxTime
@@ -112,6 +153,15 @@ function safeHandler($) {
         return ret;
     }
     */
+
+    // click events
+
+    $("#modalClose").click(function() {
+        $("#drilldownModal").hide();
+        $("#drilldownModal").css('opacity', 0);
+        $("#drillDownTitle").text("Server: ");
+    });
+
 };
 
 /*
