@@ -25,7 +25,8 @@ function safeHandler($) {
     // functions
 
     /**
-     *  loadData()
+     *  Load data from JSON API
+     *
      *  connect to API and get server data points
      *  loadThe UI Elements dynamically using flot
      *  call itself in 30 seconds
@@ -40,14 +41,16 @@ function safeHandler($) {
                 currentData = inData;
 
                 loadBarUI(currentData);
-
+                loadGaugesUI(currentData);
             }
         });
         setTimeout(function() { loadData(); }, 30000);
     };
 
     /**
-     * loadBarUI()
+     * CPU/Memory Bar UI Controller
+     *
+     *
      * loads the bar graph onto the div element #cpubar
      * call flot with $.plot to dynamically render the bar graph
      * bind click and hover functions to the div element
@@ -83,7 +86,8 @@ function safeHandler($) {
     };
 
     /**
-     * loadBarData()
+     * TODO Break this up into multiple parts.
+     *
      * parse the current data into barGraph form
      * two bars means two arrays inside an array for data
      * setup ticks(xaxis values) manually to override the default
@@ -156,10 +160,7 @@ function safeHandler($) {
         };
     };
 
-
     /**
-     * loadDrillDown
-     *
      * Handles UI formation of drillDownModal element
      *
      * @param item
@@ -181,8 +182,6 @@ function safeHandler($) {
     };
 
     /**
-     * loadSingleTimeData()
-     *
      * Generates time graph data from a single server node object
      *
      * @param input
@@ -231,6 +230,156 @@ function safeHandler($) {
             data: data,
             options: options
         };
+    };
+
+
+    /**
+     * Gauges UI Controller
+     *
+     * get data, average the data
+     * create the two UI's
+     * display the two UI's
+     * @param curData
+     */
+    function loadGaugesUI(curData) {
+
+        var gaugeData = loadGaugesData(getAverages(curData));
+
+        var optionsCPU = {
+            xaxis: {
+                ticks: [[0, "Average CPU"]],
+                tickColor: "#282828"
+            },
+            yaxis: {
+                min: 0,
+                max: 100,
+                tickSize: 10
+            }
+        };
+        var optionsMEM = {
+            xaxis: {
+                ticks: [[0, "Average Memory"]],
+                tickColor: "#282828"
+            },
+            yaxis: {
+                min: 0,
+                max: 100,
+                tickSize: 10
+            }
+        };
+
+        console.log(gaugeData);
+        $.plot($("#cpuGauge"), [gaugeData.cpu], optionsCPU);
+        $.plot($("#memGauge"), [gaugeData.mem], optionsMEM);
+
+    };
+
+    /**
+     * Put data into correct format for the gauge
+     *
+     * @param averages
+     * @returns {{cpu: {data: *[], color: *, bars: {show: boolean, align: string, barWidth: number}}, mem: {data: *[], color: *, bars: {show: boolean, align: string}}}}
+     */
+    function loadGaugesData(averages) {
+
+        console.log(averages);
+
+        var cpuBar = {
+            data: [[0, averages.cpu]],
+            color: getColor(averages.cpu),
+            bars: {
+                show: true,
+                align: 'center',
+                barWidth:.25
+
+            }
+        };
+
+        var memBar = {
+            data: [[0, averages.mem]],
+            color: getColor(averages.mem),
+            bars: {
+                show: true,
+                align: 'center'
+            }
+        };
+
+        return {
+            cpu: cpuBar,
+            mem: memBar
+        };
+    };
+
+    /**
+     * Compute the averages for cpu and memory from data given
+     * @param curData
+     * @returns {{cpu: number, mem: number}}
+     */
+    function getAverages(curData) {
+
+        var cpuSum = 0;
+        var memSum = 0;
+        var totalFound = 0;
+        if (curData && curData.length > 0)
+        {
+            for(var i = 0; i < curData.length; i++)
+            {
+                if (curData[i].data.length > 0)
+                {
+                    cpuSum += curData[i].data[curData[i].data.length - 1].cpu;
+                    memSum += curData[i].data[curData[i].data.length - 1].mem;
+                    totalFound++;
+                }
+            }
+
+            if (totalFound > 0)
+            {
+                return {
+                    cpu: (cpuSum / totalFound),
+                    mem: (memSum / totalFound)
+                }
+
+            } else {
+
+                return {
+                    cpu: 0,
+                    mem: 0
+                }
+            }
+        } else {
+            return {
+                cpu: 0,
+                mem: 0
+            }
+        }
+
+    };
+
+    /**
+     * Determine the color of the gauge
+     *
+     * @param average
+     * @returns {string}
+     */
+    function getColor(average) {
+        if (isNaN(average) === false)
+        {
+            if (average > 90) {
+                return "#FF0000"; // red
+            } else if (average > 80) {
+                return "#FF7F00";
+            } else if (average > 65) {
+                return "#FFFF00";
+            } else if (average > 50) {
+                return "#A0D622";
+            } else if (average > 25) {
+                return "#0ED318";
+            } else {
+                return "#2276FF";
+            }
+        } else {
+            return "#2276FF"
+        }
     };
 
 
