@@ -67,7 +67,7 @@
 #title {
   text-align: center;
 }
-#title h4 {
+#title h2 {
   color: white;
 }
 .flotGauge {
@@ -81,9 +81,18 @@
   margin: 0 auto 0 auto;
 }
 .flotMediumWShortH {
-  width: 900;
+  width: 900px;
   height: 300px;
   margin: 1em 1em 1em auto;
   overflow-x: hidden;
   display: inline-block;
+}
+.flot-y-axis .flot-tick-label {
+  color: white;
+  font-weight: bold;
+  font-size: large;
+}
+.flotGauge .flot-x-axis .flot-tick-label {
+  color: white;
+  font-weight: bold;
 }

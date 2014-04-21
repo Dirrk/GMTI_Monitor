@@ -146,6 +146,11 @@ function safeHandler($) {
                    ticks: ticks,
                    tickLength: 0
             },
+            yaxis: {
+              min: 0,
+              max: 100,
+              tickSize: 10
+            },
             tooltip: true,
             tooltipOpts: {
                 content: "%s was %y.2%"
@@ -247,7 +252,7 @@ function safeHandler($) {
 
         var optionsCPU = {
             xaxis: {
-                ticks: [[0, "Average CPU"]],
+                ticks: [[0, "Avg. CPU"]],
                 tickColor: "#282828"
             },
             yaxis: {
@@ -258,7 +263,7 @@ function safeHandler($) {
         };
         var optionsMEM = {
             xaxis: {
-                ticks: [[0, "Average Memory"]],
+                ticks: [[0, "Avg. Mem"]],
                 tickColor: "#282828"
             },
             yaxis: {
