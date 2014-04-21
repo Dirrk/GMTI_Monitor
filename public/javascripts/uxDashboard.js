@@ -42,6 +42,7 @@ function safeHandler($) {
 
                 loadBarUI(currentData);
                 loadGaugesUI(currentData);
+                loadSortUI(currentData);
             }
         });
         setTimeout(function() { loadData(); }, 30000);
@@ -149,7 +150,7 @@ function safeHandler($) {
             yaxis: {
               min: 0,
               max: 100,
-              tickSize: 10
+              tickSize: 20
             },
             tooltip: true,
             tooltipOpts: {
@@ -236,7 +237,6 @@ function safeHandler($) {
             options: options
         };
     };
-
 
     /**
      * Gauges UI Controller
@@ -387,6 +387,58 @@ function safeHandler($) {
         }
     };
 
+    function loadSortUI(curData) {
+
+        var tempData = getCurrentValues(curData);
+
+        var sortedByCPU = [];
+        var sortedByMem = [];
+
+        tempData.sort(function(serverA, serverB) {
+           return serverB.cpu - serverA.cpu;
+        });
+
+        for (var i = 0; i < 5 && i < tempData.length; i++)
+        {
+            sortedByCPU.push(tempData[i].server);
+        }
+
+        tempData.sort(function(serverA, serverB) {
+            return serverB.mem - serverA.mem;
+        });
+
+        for (var i = 0; i < 5 && i < tempData.length; i++)
+        {
+            sortedByMem.push(tempData[i].server);
+        }
+
+        console.log("CPU");
+        console.log(sortedByCPU);
+        console.log("Mem");
+        console.log(sortedByMem);
+    };
+
+    function getCurrentValues(curData) {
+
+        var ret = [];
+
+        for (var i = 0; i < curData.length; i++)
+        {
+            var aServer = {
+                server: curData[i].server,
+                cpu: 0.00,
+                mem: 0.00
+            };
+            if (curData[i].data.length > 0)
+            {
+                aServer.cpu = curData[i].data[curData[i].data.length - 1].cpu;
+                aServer.mem = curData[i].data[curData[i].data.length - 1].mem;
+            }
+            ret.push(aServer);
+        }
+        return ret;
+
+    };
 
     // click events
 
