@@ -11,62 +11,65 @@ function safeHandler($) {
     "use strict";
 
     // run at start
-    loadUXBar($);
+    loadData();
 
     // global
-    var currentData;
+    var currentData,
+        previousPoint = null;
 
     // static
     var CPU_COLOR = "#00B7FF",
         MEM_COLOR = "#FFB700";
 
 
+    // functions for handling data and loading dynamic ui elements
+    // flot is used for graphs / charts
 
-
-    function loadUXBar($) {
-
-        var previousPoint = null;
+    function loadData() {
 
         $.get('/api/noc/ux').success( function( jdata ) {
-
-            console.log(jdata);
 
             if (jdata && jdata.length > 0) {
 
                 currentData = jdata;
-                var barData = loadBarData(jdata);
-                console.log(barData);
 
-                var plot = $.plot($("#cpubar"), barData.data, barData.options);
-
-                $("#cpubar").bind("plotclick", function (event, pos, item) {
-                    if (item)
-                    {
-                        plot.highlight(item.series, item.datapoint);
-                        loadDrillDown(item);
-                        setTimeout(function() { plot.unhighlight(item.series, item.datapoint) }, 1000);
-                    }
-                });
-
-                $("#cpubar").bind("plothover", function (event, pos, item) {
-                    if (item)
-                    {
-                        if (previousPoint != item.dataIndex && item.dataIndex < currentData.length)
-                        {
-                            var server = currentData[item.dataIndex];
-
-                            var text = $("#flotTip").text();
-                            $("#flotTip").text(server.server + ": " + text);
-                        }
-                    } else {
-                        $("#cpubarLabel").hide();
-                    }
-                });
+                loadBarUI(currentData);
 
             }
         });
-        setTimeout(function() { loadUXBar($); }, 30000);
-    }
+        setTimeout(function() { loadData(); }, 30000);
+    };
+
+    function loadBarUI(curData) {
+
+        var barData = loadBarData(curData);
+
+        var plot = $.plot($("#cpubar"), barData.data, barData.options);
+
+        $("#cpubar").bind("plotclick", function (event, pos, item) {
+            if (item)
+            {
+                plot.highlight(item.series, item.datapoint);
+                loadDrillDown(item);
+                setTimeout(function() { plot.unhighlight(item.series, item.datapoint) }, 1000);
+            }
+        });
+
+        $("#cpubar").bind("plothover", function (event, pos, item) {
+            if (item)
+            {
+                if (previousPoint != item.dataIndex && item.dataIndex < currentData.length)
+                {
+                    var server = currentData[item.dataIndex];
+
+                    var text = $("#flotTip").text();
+                    $("#flotTip").text(server.server + ": " + text);
+                }
+            } else {
+                $("#cpubarLabel").hide();
+            }
+        });
+    };
 
     function loadBarData(input) {
         var cpuBars = {
@@ -131,14 +134,14 @@ function safeHandler($) {
             options: opt
         };
         return ret;
-    }
+    };
 
     function loadDrillDown(item) {
 
         if (item.dataIndex < currentData.length)
         {
             var server = currentData[item.dataIndex];
-            console.log(server);
+
             // #drillDownHolder
             $("#drilldownModal").show();
             $("#drilldownModal").css('opacity', 0.95);
@@ -194,32 +197,6 @@ function safeHandler($) {
         };
     };
 
-    function loadUXTime($) {
-        // load uxTime
-    }
-
-    /*
-    function getServerData(input, iterator) {
-        var ret = null;
-        if (input) {
-
-
-            var ret = {
-                label: input.server || "server-" + (Math.random() * 1000).toString(),
-                data: [],
-                bars: {
-                    show:      true,
-                    fill:      true,
-                    lineWidth: 1,
-                    order:     iterator || undefined,
-                    fillColor: "#FFFFFF"
-                },
-                color: "#FFFFF"
-            }
-        }
-        return ret;
-    }
-    */
 
     // click events
 
@@ -232,6 +209,8 @@ function safeHandler($) {
 };
 
 /*
+
+Overview of json data
 
  [
  {

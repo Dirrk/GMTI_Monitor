@@ -2,14 +2,24 @@
    Created by Derek Rada on 4/18/2014.
 extends layout
 block append style
-    link(rel='stylesheet', href='/stylesheets/uilayout.css')
+    link(rel='stylesheet', href='/stylesheets/index.css')
     link(rel='stylesheet', href='/stylesheets/noc.css')
+    link(rel='stylesheet', href='/stylesheets/uilayout.css')
 
 block append header
-    h1 MOC UX Layer
-    p nginx/uWSGI front end servers.  CPU Data
+    .nav
+        h1
+            a(href="/") GMTI
+        p >
+        h1
+            a(href="/noc") NOC
+        p >
+        h1 AIME UX
+
 
 block append content
+    #title
+        h4 nginx/uWSGI front end servers.  CPU/Memory data
     #flot-container
         #cpubar.flotFullWShortH
         #drilldownModal
@@ -20,7 +30,8 @@ block append content
         // #cputime.flotFullWShortH
 
 block append footer
-    p This information is up to 2 minutes old.
+    p Click to on a bar to drill down to that specific server.
+    p Data is refreshed every 30 seconds but could be up to 1 minute old.  Data is discarded every hour.
 
 block append scripts
     script(type='text/javascript', src='/javascripts/flot/jquery.min.js')

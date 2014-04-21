@@ -63,3 +63,9 @@
   margin: 1em auto 1em auto;
   overflow-x: hidden;
 }
+#title {
+  text-align: center;
+}
+#title h4 {
+  color: white;
+}
