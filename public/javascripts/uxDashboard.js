@@ -22,16 +22,22 @@ function safeHandler($) {
         MEM_COLOR = "#FFB700";
 
 
-    // functions for handling data and loading dynamic ui elements
-    // flot is used for graphs / charts
+    // functions
 
+    /**
+     *  loadData()
+     *  connect to API and get server data points
+     *  loadThe UI Elements dynamically using flot
+     *  call itself in 30 seconds
+     *
+     */
     function loadData() {
 
-        $.get('/api/noc/ux').success( function( jdata ) {
+        $.get('/api/noc/ux').success( function( inData ) {
 
-            if (jdata && jdata.length > 0) {
+            if (inData && inData.length > 0) {
 
-                currentData = jdata;
+                currentData = inData;
 
                 loadBarUI(currentData);
 
@@ -40,6 +46,13 @@ function safeHandler($) {
         setTimeout(function() { loadData(); }, 30000);
     };
 
+    /**
+     * loadBarUI()
+     * loads the bar graph onto the div element #cpubar
+     * call flot with $.plot to dynamically render the bar graph
+     * bind click and hover functions to the div element
+     * @param curData = currentData after refreshed
+     */
     function loadBarUI(curData) {
 
         var barData = loadBarData(curData);
@@ -65,12 +78,20 @@ function safeHandler($) {
                     var text = $("#flotTip").text();
                     $("#flotTip").text(server.server + ": " + text);
                 }
-            } else {
-                $("#cpubarLabel").hide();
             }
         });
     };
 
+    /**
+     * loadBarData()
+     * parse the current data into barGraph form
+     * two bars means two arrays inside an array for data
+     * setup ticks(xaxis values) manually to override the default
+     * use tooltip flot plugin to generate it.
+     *
+     * @param input = currentData after being refreshed
+     * @returns { data, options }
+     */
     function loadBarData(input) {
         var cpuBars = {
             data: [],
@@ -123,19 +144,26 @@ function safeHandler($) {
             },
             tooltip: true,
             tooltipOpts: {
-                         content: "%s was %y.2%"
+                content: "%s was %y.2%"
             }
         };
-        var ret = {
+        return {
             data: [
                   cpuBars,
                   memBars
             ],
             options: opt
         };
-        return ret;
     };
 
+
+    /**
+     * loadDrillDown
+     *
+     * Handles UI formation of drillDownModal element
+     *
+     * @param item
+     */
     function loadDrillDown(item) {
 
         if (item.dataIndex < currentData.length)
@@ -152,6 +180,14 @@ function safeHandler($) {
         }
     };
 
+    /**
+     * loadSingleTimeData()
+     *
+     * Generates time graph data from a single server node object
+     *
+     * @param input
+     * @returns {{data: *[], options: {grid: {hoverable: boolean}, xaxis: {mode: string, timezone: string, timeformat: string}, lines: {show: boolean}, points: {show: boolean}, tooltip: boolean, tooltipOpts: {content: string}}}}
+     */
     function loadSingleTimeData(input) {
         var cpuLine = {
             label: "CPU",
@@ -205,6 +241,14 @@ function safeHandler($) {
         $("#drilldownModal").css('opacity', 0);
         $("#drillDownTitle").text("Server: ");
     });
+
+
+    // force refresh every 30 minutes
+    setTimeout(function() {
+
+        location.reload(true);
+
+    }, 1800000);
 
 };
 
