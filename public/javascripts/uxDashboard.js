@@ -25,6 +25,8 @@ function safeHandler($) {
 
     function loadUXBar($) {
 
+        var previousPoint = null;
+
         $.get('/api/noc/ux').success( function( jdata ) {
 
             console.log(jdata);
@@ -43,6 +45,20 @@ function safeHandler($) {
                         plot.highlight(item.series, item.datapoint);
                         loadDrillDown(item);
                         setTimeout(function() { plot.unhighlight(item.series, item.datapoint) }, 1000);
+                    }
+                });
+
+                $("#cpubar").bind("plothover", function (event, pos, item) {
+                    if (item)
+                    {
+                        if (previousPoint != item.dataIndex && item.dataIndex < currentData.length)
+                        {
+                            var server = currentData[item.dataIndex];
+                            $("#cpubarLabel").show();
+                            $("#cpubarLabel").text("Server: " + server.server);
+                        }
+                    } else {
+                        $("#cpubarLabel").hide();
                     }
                 });
 
@@ -103,7 +119,7 @@ function safeHandler($) {
             },
             tooltip: true,
             tooltipOpts: {
-                         content: "%s for %x was %y.2%"
+                         content: "%s was %y.2%"
             }
         };
         var ret = {

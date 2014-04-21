@@ -9,7 +9,7 @@
 
 var nconf = require('nconf');
 var numUpdates = 0;
-var debug = true;
+var debug = false;
 
 // var data = nconf.use('data');
 
@@ -29,13 +29,10 @@ exports.update = function(req, res) {
         memUsed = parseInt(data.used || "0");
         memTotal = parseInt(data.total || "0");
         res.send(200);
-        numUpdates++;
-        if ((numUpdates % 50) === 0) {
-            saveToDisk(0);
-        }
 
     } catch (e) {
         res.send(500);
+        return;
     }
 
     if (memTotal != 0) {
@@ -44,19 +41,23 @@ exports.update = function(req, res) {
 
     // add data to nconf
     addServerData(server, cpu, mem);
+    numUpdates++;
+    if ((numUpdates % 50) === 0) {
+        saveToDisk(0);
+    }
 };
 
 function addServerData(server, cpu, mem, count) {
 
     var data = nconf.use('data');
+    server = server.split('.')[0];
 
     if (data.get('lock') === false || count >= 5)
     {
         data.set('lock', true);
         var servers = data.get('servers'),
             iterator,
-            found,
-            temp = [];
+            found;
 
         for(iterator = 0, found = servers.length; iterator < servers.length; iterator++)
         {
@@ -83,7 +84,7 @@ function addServerData(server, cpu, mem, count) {
             }
         );
 
-        while (servers[found].data.length > 30)
+        while (servers[found].data.length > 60)
         {
             servers[found].data.shift();
         }
@@ -107,6 +108,7 @@ var saveToDisk = exports.saveToDisk = function saveToDisk (count) {
 
     if (data.get('lock') === false || count >= 5)
     {
+        console.log("Saving data to disk");
         data.set('lock', true);
 
         cleanUpData();
@@ -128,11 +130,14 @@ var saveToDisk = exports.saveToDisk = function saveToDisk (count) {
 
 function cleanUpData() {
 
-    if (debug) { return };
+    // if (debug === true) { return };
 
     var data = nconf.use('data');
     var servers = data.get('servers');
     var toRemove = [];
+
+    console.log("Cleaning up data");
+    console.log(servers);
 
     for(var i = 0; i < servers.length; i++)
     {
@@ -146,7 +151,7 @@ function cleanUpData() {
                 if (temp[0].time <= (new Date().getTime() - 3600000))
                 {
                     servers[i].data.shift();
-                    temp.shift();
+                    // temp.shift();
                 } else {
                     done = true;
                 }
@@ -157,7 +162,7 @@ function cleanUpData() {
         }
         if (servers[i].data.length == 0)
         {
-            toRemove.push(i);
+            toRemove.unshift(i);
         }
 
     }

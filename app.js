@@ -56,6 +56,7 @@ else {
         // Load nconf files or fail
         nconf.add('data', {type: 'file', file: './public/data/data.json', loadSync: true });
         nconf.use('data').set('lock', false);
+        api.saveToDisk();
 
         // Bind express and begin setting up the environment
         var app = express();
@@ -94,7 +95,7 @@ else {
         );
 
         setTimeout(function() {
-            api.saveToDisk(0);
+            api.saveToDisk(5);
         }, 120000);
     }
 }
