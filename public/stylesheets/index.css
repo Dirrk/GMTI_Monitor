@@ -2,6 +2,21 @@
   background-color: #131313;
   border-radius: 15px;
 }
-h1 {
-  color: #00b7ff;
+#departments {
+  overflow: auto;
+}
+.nav .nav a,
+.nav h1 {
+  display: inline-block;
+  text-decoration: none;
+}
+h1 a {
+  text-decoration: none;
+}
+.nav p {
+  display: inline-block;
+  font-size: large;
+  font-weight: bolder;
+  padding-left: 5px;
+  padding-right: 5px;
 }

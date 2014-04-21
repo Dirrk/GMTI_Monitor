@@ -23,3 +23,34 @@ a {
 .hidden {
   display: none;
 }
+h1,
+h2,
+h3,
+h4,
+h5 {
+  color: #00b7ff;
+}
+.department {
+  width: 300px;
+  float: left;
+  height: 200px;
+  font-size: xx-large;
+  color: #131313;
+  background-color: #f3f3f3;
+  border-radius: 15px;
+  border: thick #282828 solid;
+  margin: 1em 1em 1em 1em;
+  text-align: center;
+}
+.department h1 {
+  padding-top: 10%;
+}
+.department h2 {
+  padding-top: 12%;
+}
+.department h3 {
+  padding-top: 15%;
+}
+.department a {
+  text-decoration: none;
+}

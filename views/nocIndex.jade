@@ -3,11 +3,18 @@ extends layout
 block append style
     link(rel='stylesheet', href='/stylesheets/index.css')
 block append header
-    h1 GMTI NOC
-    p Select a dashboard below
+    .nav
+        h1
+            a(href="/") GMTI
+        p >
+        h1
+            a(href="/noc") NOC
+
 block append content
-    label Dashboards here
-    #dashboardsList
-block append footer
-    p Created by Derek Rada
+    h3 Dashboards / Applications
+    #departments
+        #ux.department
+            h2
+                a(href="/noc/ux") AIME UX
+
 

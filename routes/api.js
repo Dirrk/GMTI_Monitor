@@ -115,7 +115,7 @@ var saveToDisk = exports.saveToDisk = function saveToDisk (count) {
     {
         if (count >= 5)
         {
-            console.log("Force Saving data to disk " + Date.now().toLocaleString());
+            console.log("Force Saving data to disk " + (new Date).toLocaleString());
         }
 
         data.set('lock', true);

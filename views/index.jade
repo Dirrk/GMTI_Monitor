@@ -5,10 +5,16 @@ block append style
     link(rel='stylesheet', href='/stylesheets/index.css')
 block append header
     h1 GMTI
-    p Web App designed for manual tasks and automation.  This webapp is hosted on #{computer}
+    p This web application was built for the NOC.  This webapp is hosted on #{computer}
 
 block append content
-    p Content
+    h3 Departments / Applications:
+    #departments
+        #noc.department
+            h1
+                a(href="/noc") NOC
+
+
 
 block append footer
     p Created by Derek Rada
