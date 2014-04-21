@@ -54,8 +54,9 @@ function safeHandler($) {
                         if (previousPoint != item.dataIndex && item.dataIndex < currentData.length)
                         {
                             var server = currentData[item.dataIndex];
-                            $("#cpubarLabel").show();
-                            $("#cpubarLabel").text("Server: " + server.server);
+
+                            var text = $("#flotTip").text();
+                            $("#flotTip").text(server.server + ": " + text);
                         }
                     } else {
                         $("#cpubarLabel").hide();

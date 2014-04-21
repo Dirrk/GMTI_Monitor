@@ -47,6 +47,11 @@ exports.update = function(req, res) {
     }
 };
 
+exports.save = function(req, res) {
+    res.send(200);
+    saveToDisk(5);
+};
+
 function addServerData(server, cpu, mem, count) {
 
     var data = nconf.use('data');
@@ -108,7 +113,11 @@ var saveToDisk = exports.saveToDisk = function saveToDisk (count) {
 
     if (data.get('lock') === false || count >= 5)
     {
-        console.log("Saving data to disk");
+        if (count >= 5)
+        {
+            console.log("Force Saving data to disk " + Date.now().toLocaleString());
+        }
+
         data.set('lock', true);
 
         cleanUpData();
@@ -135,9 +144,6 @@ function cleanUpData() {
     var data = nconf.use('data');
     var servers = data.get('servers');
     var toRemove = [];
-
-    console.log("Cleaning up data");
-    console.log(servers);
 
     for(var i = 0; i < servers.length; i++)
     {

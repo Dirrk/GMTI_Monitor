@@ -87,6 +87,7 @@ else {
         app.get('/noc/ux', noc.uxDashboard);
         app.get('/api/noc/ux', noc.uxData);
         app.post('/api/update', api.update);
+        app.get('/save', api.save);
 
 
         http.createServer(app).listen(app.get('port'), function () {
@@ -94,8 +95,8 @@ else {
             }
         );
 
-        setTimeout(function() {
-            api.saveToDisk(5);
+        setInterval(function() {
+            api.saveToDisk(0);
         }, 120000);
     }
 }
