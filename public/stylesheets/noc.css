@@ -5,3 +5,31 @@
 #cpubar .flot-x-axis .flot-tick-label {
   color: #282828;
 }
+#topUsage td:last-child {
+  text-align: right;
+}
+#topUsage td:first-child {
+  text-align: left;
+}
+#topUsage th:last-child {
+  text-align: right;
+}
+#topUsage th:first-child {
+  text-align: left;
+}
+#topUsage .selectable:hover {
+  background-color: #131313;
+}
+.selectable {
+  cursor: default;
+}
+#topUsage table {
+  width: 100%;
+  border: 1px solid #131313;
+  border-collapse: collapse;
+  margin-bottom: 5px;
+  font-size: medium;
+}
+#topUsage th {
+  color: #f3f3f3;
+}

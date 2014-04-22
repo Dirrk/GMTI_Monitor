@@ -3,10 +3,42 @@
  */
 
 $(document.body).ready(function() {
-    safeHandler($);
+    safeHandler();
 });
 
-function safeHandler($) {
+// angular
+var usageApp = angular.module('usageApp', []);
+
+usageApp.controller('usageCntrl', ['$scope',
+   function($scope) {
+
+       $scope.CPUServers = [];
+       $scope.MemServers = [];
+
+       // external controllers ** Call .scope.$apply() **
+       $scope.updateCPU = function (servers) {
+           for (var i = 0; i < servers.length; i++)
+           {
+               var cpu = Math.floor(servers[i].cpu * 1000);
+               servers[i].cpu = cpu / 1000;
+           }
+           $scope.CPUServers = servers;
+       };
+       $scope.updateMem = function (servers) {
+           for (var i = 0; i < servers.length; i++)
+           {
+               var mem = Math.floor(servers[i].mem * 1000);
+               servers[i].mem = mem / 1000;
+           }
+           $scope.MemServers = servers;
+       };
+       $scope.drillDown = function (server) {
+           $.external_callLoadDrillDown(server);
+       }
+   }]
+);
+
+function safeHandler() {
 
     "use strict";
 
@@ -21,6 +53,7 @@ function safeHandler($) {
     var CPU_COLOR = "#00B7FF",
         MEM_COLOR = "#FFB700";
 
+    // (ng-app="usageApp", ng-controller="usageCntrl")
 
     // functions
 
@@ -387,6 +420,11 @@ function safeHandler($) {
         }
     };
 
+
+    /**
+     * Sort current data by cpu and memory and update angular view to control table of data
+     * @param curData
+     */
     function loadSortUI(curData) {
 
         var tempData = getCurrentValues(curData);
@@ -400,7 +438,7 @@ function safeHandler($) {
 
         for (var i = 0; i < 5 && i < tempData.length; i++)
         {
-            sortedByCPU.push(tempData[i].server);
+            sortedByCPU.push(tempData[i]);
         }
 
         tempData.sort(function(serverA, serverB) {
@@ -409,15 +447,22 @@ function safeHandler($) {
 
         for (var i = 0; i < 5 && i < tempData.length; i++)
         {
-            sortedByMem.push(tempData[i].server);
+            sortedByMem.push(tempData[i]);
         }
 
-        console.log("CPU");
-        console.log(sortedByCPU);
-        console.log("Mem");
-        console.log(sortedByMem);
+        angular.element($("#topUsage")).scope().updateCPU(sortedByCPU);
+        angular.element($("#topUsage")).scope().updateMem(sortedByMem);
+        angular.element($("#topUsage")).scope().$apply();
     };
 
+
+    /**
+     * Goes through current data and returns all servers with their latest data point
+     *
+     * @param curData
+     * @returns Array [ { server, cpu, mem } ]
+     *
+     */
     function getCurrentValues(curData) {
 
         var ret = [];
@@ -440,6 +485,29 @@ function safeHandler($) {
 
     };
 
+    function getIdByName(name) {
+
+        for(var i = 0; i < currentData.length; i++)
+        {
+            if (currentData[i].server == name)
+            {
+                console.log("i:" + i);
+                return i;
+            }
+        }
+        console.log("i: -1");
+        return -1;
+
+    };
+
+    $.external_callLoadDrillDown = function (serverName) {
+
+        var id = getIdByName(serverName);
+        if (id >= 0)
+        {
+            loadDrillDown({dataIndex: id});
+        }
+    };
     // click events
 
     $("#modalClose").click(function() {

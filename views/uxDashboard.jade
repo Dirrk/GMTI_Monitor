@@ -25,6 +25,27 @@ block append content
         #line2
             #cpuGauge.flotGauge
             #memGauge.flotGauge
+            #topUsage.flotGauge(ng-app="usageApp", ng-controller="usageCntrl")
+                #cpu
+                    table
+                        thead
+                            tr
+                                th High CPU
+                                th %
+                        tbody
+                            tr.selectable(ng-repeat="server in CPUServers")
+                                td(ng-click="drillDown(server.server)") {{server.server}}
+                                td(ng-click="drillDown(server.server)") {{server.cpu}}
+                #memory
+                    table
+                        thead
+                            tr
+                                th High Memory
+                                th %
+                        tbody
+                            tr.selectable(ng-repeat="server in MemServers")
+                                td(ng-click="drillDown(server.server)") {{server.server}}
+                                td(ng-click="drillDown(server.server)") {{server.mem}}
             // #timeChart.flotMediumWShortH
 
     #drilldownModal
@@ -44,4 +65,6 @@ block append scripts
     script(type='text/javascript', src='/javascripts/flot/jquery.flot.orderBars.js')
     script(type='text/javascript', src='/javascripts/flot/jquery.flot.tooltip.min.js')
     script(type='text/javascript', src='/javascripts/flot/jquery.flot.time.min.js')
+    script(type='text/javascript', src='/javascripts/angular.js')
     script(type='text/javascript', src='/javascripts/uxDashboard.js')
+
