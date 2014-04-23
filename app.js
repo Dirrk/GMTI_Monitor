@@ -55,6 +55,7 @@ else {
 
         // Load nconf files or fail
         nconf.add('data', {type: 'file', file: './public/data/data.json', loadSync: true });
+        nconf.add('db', {type: 'file', file: './public/data/servers.json', loadSync: true });
         nconf.use('data').set('lock', false);
         api.saveToDisk();
 

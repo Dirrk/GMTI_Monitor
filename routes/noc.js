@@ -20,8 +20,19 @@ exports.uxData = function(req, res) {
     var data = nconf.use('data');
 
    try { // try to read the file and get servers variable
-       var servers = data.get('servers');
-       res.json(servers); // reply with servers json
+       var servers = data.get('servers'); // sort the list before sending
+       var servers2 = servers.sort(function (a, b) {
+           if (a.server < b.server)
+           {
+               return -1;
+           } else if (a.server > b.server) {
+               return 1;
+           } else {
+               return 0;
+           }
+
+       });
+       res.json(servers2); // reply with servers json
 
    } catch (e) { // catch the error n send 500
        util.log(e);

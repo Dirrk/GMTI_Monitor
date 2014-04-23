@@ -1,0 +1,214 @@
+{
+  "servers": [
+    {
+      "server": "moc-lx00009001",
+      "group": 0
+    },
+    {
+      "server": "moc-lx00009002",
+      "group": 0
+    },
+    {
+      "server": "moc-lx00009003",
+      "group": 0
+    },
+    {
+      "server": "moc-lx00009004",
+      "group": 0
+    },
+    {
+      "server": "moc-lx00009005",
+      "group": 0
+    },
+    {
+      "server": "moc-lx00009006",
+      "group": 0
+    },
+    {
+      "server": "moc-lx00009007",
+      "group": 0
+    },
+    {
+      "server": "moc-lx00009008",
+      "group": 0
+    },
+    {
+      "server": "moc-lx00009009",
+      "group": 0
+    },
+    {
+      "server": "moc-lx00009010",
+      "group": 0
+    },
+    {
+      "server": "moc-lx00009087",
+      "group": 0
+    },
+    {
+      "server": "moc-lx00009088",
+      "group": 0
+    },
+    {
+      "server": "moc-lx00009089",
+      "group": 0
+    },
+    {
+      "server": "moc-lx00009090",
+      "group": 0
+    },
+    {
+      "server": "moc-lx00009091",
+      "group": 0
+    },
+    {
+      "server": "moc-lx00009092",
+      "group": 0
+    },
+    {
+      "server": "moc-lx00009093",
+      "group": 0
+    },
+    {
+      "server": "moc-lx00009094",
+      "group": 0
+    },
+    {
+      "server": "moc-lx00009095",
+      "group": 0
+    },
+    {
+      "server": "moc-lx00009096",
+      "group": 0
+    },
+    {
+      "server": "moc-lx00009097",
+      "group": 0
+    },
+    {
+      "server": "moc-lx00009098",
+      "group": 0
+    },
+    {
+      "server": "moc-lx00009099",
+      "group": 0
+    },
+    {
+      "server": "moc-lx00009100",
+      "group": 0
+    },
+    {
+      "server": "moc-lx00009101",
+      "group": 0
+    },
+    {
+      "server": "moc-lx00009102",
+      "group": 1
+    },
+    {
+      "server": "moc-lx00009103",
+      "group": 1
+    },
+    {
+      "server": "moc-lx00009104",
+      "group": 1
+    },
+    {
+      "server": "moc-lx00009105",
+      "group": 1
+    },
+    {
+      "server": "moc-lx00009106",
+      "group": 1
+    },
+    {
+      "server": "moc-lx00009107",
+      "group": 1
+    },
+    {
+      "server": "moc-lx00009108",
+      "group": 1
+    },
+    {
+      "server": "moc-lx00009109",
+      "group": 1
+    },
+    {
+      "server": "moc-lx00009110",
+      "group": 1
+    },
+    {
+      "server": "moc-lx00009111",
+      "group": 1
+    },
+    {
+      "server": "moc-lx00009112",
+      "group": 1
+    },
+    {
+      "server": "moc-lx00009113",
+      "group": 1
+    },
+    {
+      "server": "moc-lx00009114",
+      "group": 1
+    },
+    {
+      "server": "moc-lx00009115",
+      "group": 1
+    },
+    {
+      "server": "moc-lx00009116",
+      "group": 1
+    },
+    {
+      "server": "moc-lx00009501",
+      "group": 1
+    },
+    {
+      "server": "moc-lx00009502",
+      "group": 1
+    },
+    {
+      "server": "moc-lx00009503",
+      "group": 1
+    },
+    {
+      "server": "moc-lx00009504",
+      "group": 1
+    },
+    {
+      "server": "moc-lx00009505",
+      "group": 1
+    },
+    {
+      "server": "moc-lx00009506",
+      "group": 1
+    },
+    {
+      "server": "moc-lx00009507",
+      "group": 1
+    },
+    {
+      "server": "moc-lx00009508",
+      "group": 1
+    },
+    {
+      "server": "moc-lx00009509",
+      "group": 1
+    },
+    {
+      "server": "moc-lx00009510",
+      "group": 1
+    }
+  ],
+  "groups": [
+    {
+      "id": 0,
+      "name": "moc-ux-1"
+    },
+    {
+      "id": 1,
+      "name": "moc-ux-2"
+    }
+  ]
+}
