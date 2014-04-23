@@ -22,6 +22,8 @@
 }
 .selectable {
   cursor: default;
+  font-size: large;
+  color: #00b7ff;
 }
 #topUsage table {
   width: 100%;
@@ -32,4 +34,20 @@
 }
 #topUsage th {
   color: #f3f3f3;
+}
+#cpu th {
+  color: #00b7ff;
+}
+#memory th {
+  color: #ffb700;
+}
+#cpu td,
+#memory td {
+  color: white;
+}
+#topUsage {
+  width: 200px;
+  height: 300px;
+  display: inline-block;
+  margin-right: 10px;
 }

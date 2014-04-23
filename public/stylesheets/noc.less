@@ -1,7 +1,9 @@
 @c-gray: #f3f3f3;
 @bg-black: #282828;
 @c-black: #131313;
-
+@cpu: #00B7FF;
+@mem: #FFB700;
+@c-blue: #00b7ff;
 .layout-wrapper-content
 {
   background-color: @bg-black;
@@ -31,10 +33,13 @@
 #topUsage .selectable:hover
 {
   background-color: @c-black;
+
 }
 .selectable
 {
   cursor: default;
+  font-size: large;
+  color: @c-blue;
 }
 
 #topUsage table
@@ -48,4 +53,25 @@
 #topUsage th
 {
   color: @c-gray;
+}
+#cpu th
+{
+  color: @cpu;
+}
+#memory th
+{
+  color: @mem;
+}
+#cpu td,
+#memory td
+{
+  color: white;
+}
+
+#topUsage
+{
+  width: 200px;
+  height: 300px;
+  display: inline-block;
+  margin-right: 10px;
 }

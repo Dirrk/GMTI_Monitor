@@ -25,7 +25,7 @@ block append content
         #line2
             #cpuGauge.flotGauge
             #memGauge.flotGauge
-            #topUsage.flotGauge(ng-app="usageApp", ng-controller="usageCntrl")
+            #topUsage.flotGauge(style="width: 200px;", ng-app="usageApp", ng-controller="usageCntrl")
                 #cpu
                     table
                         thead
@@ -56,7 +56,7 @@ block append content
         // #cputime.flotFullWShortH
 
 block append footer
-    p Click to on a bar to drill down to that specific server.
+    p Click on a bar to drill down to that specific server.
     p Data is refreshed every 30 seconds but could be up to 1 minute old.  Data is discarded after an hour.
 
 block append scripts
