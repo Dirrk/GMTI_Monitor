@@ -53,8 +53,6 @@ function safeHandler() {
     var CPU_COLOR = "#00B7FF",
         MEM_COLOR = "#FFB700";
 
-    // (ng-app="usageApp", ng-controller="usageCntrl")
-
     // functions
 
     /**

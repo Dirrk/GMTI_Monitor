@@ -81,10 +81,10 @@ function addServerData(server, cpu, mem, count) {
                     data: []
                 }
             );
-        } else if (!servers[found].group) {
+        } else if (!servers[found].group || servers[found].group < 0) {
 
             // new server will always have this old servers may not have this data because pre vrc1.3 did not have the group info in data.json
-            servers[found].group = lookUpGroup(servers[found].server);
+            servers[found].group = lookUpGroup(server);
 
         }
         servers[found].data.push(
@@ -198,12 +198,14 @@ function cleanUpData() {
     data.set('servers', servers2);
 }
 
-function lookUpGroup(serverName, cb) {
+function lookUpGroup(serverName) {
 
     var db = nconf.use('db');
     db.load();
 
-    var servers = db.get('servers');
+    var servers = db.get('db:servers');
+    console.log(servers);
+
     for (var i = 0; i < servers.length; i++)
     {
         if (serverName == servers[i].server)
