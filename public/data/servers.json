@@ -204,6 +204,10 @@
       {
         "server": "new-host",
         "group": 2
+      },
+      {
+        "server": "DEREK-PRIMARY",
+        "group": 2
       }
     ],
     "groups": [

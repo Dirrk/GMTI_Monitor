@@ -86,7 +86,7 @@ else {
         app.get('/', routes.index);
         app.get('/noc', noc.index);
         app.get('/noc/ux', noc.uxDashboard);
-        app.get('/api/noc/ux', noc.uxData);
+        app.get('/api/noc/:id', noc.uxData);
         app.post('/api/update', api.update);
         app.get('/save', api.save);
 

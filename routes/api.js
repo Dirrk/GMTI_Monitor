@@ -35,6 +35,7 @@ exports.update = function(req, res) {
         return;
     }
 
+
     if (memTotal != 0) {
         mem = ((memUsed / memTotal) * 100.00);
     }
@@ -114,7 +115,7 @@ function addServerData(server, cpu, mem, count) {
 var saveToDisk = exports.saveToDisk = function saveToDisk (count) {
 
     var data = nconf.use('data');
-    var count = count || 0;
+    count = count || 0;
     count++;
 
     if (data.get('lock') === false || count >= 5)
