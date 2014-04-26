@@ -7,12 +7,18 @@
  * @type {exports}
  */
 var os = require('os'),
-    host = os.hostname();
+    host = os.hostname(),
+    nconf = require('nconf');
+
 
 exports.index = function(req, res){
+
+  var fronts = nconf.get('db:fronts');
+
   res.render('index',
              {
-                 computer: host
+                 computer: host,
+                 fronts: fronts
              }
   );
 };

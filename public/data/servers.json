@@ -249,11 +249,6 @@
     ],
     "fronts": [
       {
-        "id": 0,
-        "url": "/test",
-        "name": "TEST"
-      },
-      {
         "id": 1,
         "url": "/moc",
         "name": "MOC"

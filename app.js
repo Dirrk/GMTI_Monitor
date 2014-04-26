@@ -87,14 +87,6 @@ else {
         app.get('/', routes.index);
         app.get('/manage', checkAuth, routes.manage); // setup later
 
-        //      * moc dashboards
-        app.get('/moc', dashboard.mocIndex);
-        app.get('/moc/:id', dashboard.mocDashboard);
-
-        //      * phx dashboards
-        app.get('/phx', dashboard.phxIndex);
-        app.get('/phx/:id', dashboard.phxDashboard);
-
         //      * api calls
         app.post('/api/update', api.update);  // Servers send data
         app.post('/api/data', api.data);  // called to get data about groups of servers
@@ -104,6 +96,7 @@ else {
         app.get('/save', api.save); // called to initiate a save
         app.post('/manage', checkAuth, api.manage); // save manage stuff
 
+        //      * catch everything else
         app.get('/*', dashboard.indexed);
 
         http.createServer(app).listen(app.get('port'), function () {

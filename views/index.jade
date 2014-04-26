@@ -10,9 +10,15 @@ block append header
 block append content
     h3 Datacenter or Applications:
     #departments
-        #moc.department
-            h1
-                a(href="/moc") MOC
-        #phx.department
-            h1
-                a(href="/phx") PHX
+        if (fronts)
+            each front in fronts
+                .department
+                    h1
+                        a(href="#{front.url}") #{front.name}
+        else
+            #moc.department
+                h1
+                    a(href="/moc") MOC
+            #phx.department
+                h1
+                    a(href="/phx") PHX
