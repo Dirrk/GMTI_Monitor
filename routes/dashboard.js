@@ -19,7 +19,7 @@ exports.indexed = function (req, res) {
 
     // either load a front / dashboard or 404
     var url = req.url.toLowerCase();
-    console.log("url: " + url);
+
 
     var front = getFrontByURL(url);
 
@@ -57,7 +57,6 @@ function getFrontByURL(url) {
     var fronts = nconf.get("db:fronts");
     for (var i = 0; i < fronts.length; i++) {
         if (url.indexOf(fronts[i].url) >= 0) {
-            console.log("Front found: " + util.inspect(fronts[i]));
             return fronts[i];
         }
     }
@@ -71,7 +70,6 @@ function getDashboardById(id) {
     {
         if (dashboards[i].id.toLowerCase() == id.toLowerCase())
         {
-            console.log("ID found: " + id);
             return dashboards[i];
         }
     }
@@ -99,7 +97,7 @@ function loadDashIndex(front, res) {
         try {
             res.send(500);
         } catch (ignore) {
-            console.log("Already sent");
+            console.log("WARN: loadDashIndex Already sent cannot resend");
         }
     }
 
@@ -108,10 +106,6 @@ function loadDashIndex(front, res) {
 function loadDashboard(front, dashboard, res) {
 
     try {
-
-        console.log("Load dashboard: front, dashboard ");
-        console.log(util.inspect(front));
-        console.log(util.inspect(dashboard));
 
         var data = {
 
@@ -127,7 +121,7 @@ function loadDashboard(front, dashboard, res) {
         try {
             res.send(500);
         } catch (ignore) {
-            console.log("Already sent");
+            console.log("WARN: loadDashboard Already sent cannot resend");
         }
     }
 

@@ -314,13 +314,13 @@ exports.saveToDisk = function saveToDisk (count) {
 function lookUpGroup(serverName) {
 
     var servers = nconf.get('db:servers');
-    console.log("lookUpGroup " + serverName);
+
 
     for (var i = 0; i < servers.length; i++)
     {
         if (serverName == servers[i].server)
         {
-            console.log("found group " + servers[i].group);
+
             return servers[i].group;
         }
     }
@@ -330,9 +330,6 @@ function lookUpGroup(serverName) {
 function getServersInGroups(servers, groups) {
 
     var ret = [];
-    console.log("getServersInGroup: servers then groups");
-    console.log(servers);
-    console.log(groups);
 
     for (var i = 0; i < servers.length; i++) {
 
@@ -343,8 +340,7 @@ function getServersInGroups(servers, groups) {
             }
         }
     }
-    console.log("Return getServersInGroups");
-    console.log(ret);
+
     return ret;
 };
 
@@ -392,7 +388,6 @@ function getDashboardById(id) {
     {
         if (dashboards[i].id.toLowerCase() == id.toLowerCase())
         {
-            console.log("ID found: " + id);
             return dashboards[i];
         }
     }
