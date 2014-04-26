@@ -213,15 +213,55 @@
     "groups": [
       {
         "id": 0,
-        "name": "moc-ux-1"
+        "name": "MOC UX Group 1"
       },
       {
         "id": 1,
-        "name": "moc-ux-2"
+        "name": "MOC UX Group 2"
       },
       {
         "id": 2,
         "name": "dev-test"
+      }
+    ],
+    "dashboards": [
+      {
+        "id": "dev_test",
+        "front": 0,
+        "name": "Dev Test",
+        "description": "Test dashboard",
+        "groups": [
+          0,
+          1,
+          2
+        ]
+      },
+      {
+        "id": "moc_aime_ux",
+        "front": 1,
+        "name": "AIME UX",
+        "description": "nginx/uWSGI frontend servers grouped by release configuration.",
+        "groups": [
+          0,
+          1
+        ]
+      }
+    ],
+    "fronts": [
+      {
+        "id": 0,
+        "url": "/test",
+        "name": "TEST"
+      },
+      {
+        "id": 1,
+        "url": "/moc",
+        "name": "MOC"
+      },
+      {
+        "id": 2,
+        "url": "/phx",
+        "name": "PHX"
       }
     ]
   }

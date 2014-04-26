@@ -42,7 +42,7 @@ else {
 
         // Routes
         var routes = require('./routes');
-        var noc = require('./routes/noc');
+        var dashboard = require('./routes/dashboard');
         var api = require('./routes/api');
 
         // Required
@@ -73,23 +73,38 @@ else {
         app.use(express.json());
         app.use(express.urlencoded());
         app.use(express.methodOverride());
-        app.use(app.router);
         app.use(require('less-middleware')({ src: path.join(__dirname, 'public') }));
         app.use(express.static(path.join(__dirname, 'public')));
+        app.use(app.router);
 
         // development only
         if ('development' == app.get('env')) {
             app.use(express.errorHandler());
         }
 
-        // API / Routes
+        // ***  Routes  ***
+        //      * index main pages
         app.get('/', routes.index);
-        app.get('/noc', noc.index);
-        app.get('/noc/ux', noc.uxDashboard);
-        app.get('/api/noc/:id', noc.uxData);
-        app.post('/api/update', api.update);
-        app.get('/save', api.save);
+        app.get('/manage', checkAuth, routes.manage); // setup later
 
+        //      * moc dashboards
+        app.get('/moc', dashboard.mocIndex);
+        app.get('/moc/:id', dashboard.mocDashboard);
+
+        //      * phx dashboards
+        app.get('/phx', dashboard.phxIndex);
+        app.get('/phx/:id', dashboard.phxDashboard);
+
+        //      * api calls
+        app.post('/api/update', api.update);  // Servers send data
+        app.post('/api/data', api.data);  // called to get data about groups of servers
+        app.get('/api/data/:id', api.getData); // called from built dashboards
+        app.post('/api/groups', api.groups); // called to get list of groups
+        app.post('/api/servers', api.servers); // called to get list of servers
+        app.get('/save', api.save); // called to initiate a save
+        app.post('/manage', checkAuth, api.manage); // save manage stuff
+
+        app.get('/*', dashboard.indexed);
 
         http.createServer(app).listen(app.get('port'), function () {
             console.log('Express server listening on port ' + app.get('port'));
@@ -99,5 +114,10 @@ else {
         setInterval(function() {
             api.saveToDisk(0);
         }, 120000);
+
+        function checkAuth(req, res, next) {
+            // everyone wins!
+            next();
+        }
     }
 }

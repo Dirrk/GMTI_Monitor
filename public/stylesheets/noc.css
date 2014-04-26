@@ -51,3 +51,6 @@
   display: inline-block;
   margin-right: 10px;
 }
+#hiddenField {
+  display: hidden;
+}

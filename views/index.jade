@@ -5,11 +5,14 @@ block append style
     link(rel='stylesheet', href='/stylesheets/index.css')
 block append header
     h1 GMTI
-    p This web application was built for GMTI.  This webapp was created by Derek Rada and is currently hosted on #{computer}.  Please contact him before troubleshooting
+    p This web application was built for the GMTI NOC.  The webapp was created by Derek Rada and is currently hosted on #{computer}.  Please contact him if you are having issues or would like to submit a request for feature / change.  drada@gmti.gannett.com
 
 block append content
-    h3 Departments / Applications:
+    h3 Datacenter or Applications:
     #departments
-        #noc.department
+        #moc.department
             h1
-                a(href="/noc") NOC
+                a(href="/moc") MOC
+        #phx.department
+            h1
+                a(href="/phx") PHX

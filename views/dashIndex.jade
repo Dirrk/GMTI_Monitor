@@ -7,13 +7,17 @@ block append header
         h1
             a(href="/") GMTI
         p >
-        h1 NOC
+        if (front)
+            h1 #{front.name}
+        else
+            h1 New
 
 block append content
     h3 Dashboards / Applications
     #departments
-        #ux.department
-            h2
-                a(href="/noc/ux") AIME UX
+        each dashboard in dashboards
+            #ux.department
+                h2
+                    a(href="#{front.url}/#{dashboard.id}") #{dashboard.name}
 
 

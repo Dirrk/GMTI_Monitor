@@ -3,7 +3,10 @@
  */
 
 $(document.body).ready(function() {
-    safeHandler();
+
+    var dashboardId = $("#hiddenField").data('did');
+    console.log("Document Ready");
+    safeHandler(dashboardId);
 });
 
 // angular
@@ -38,22 +41,29 @@ usageApp.controller('usageCntrl', ['$scope',
    }]
 );
 
-function safeHandler() {
+function safeHandler(dataId) {
 
     "use strict";
 
-    // run at start
-    loadData();
-
     // global
-    var currentData,
-        previousPoint = null;
+    var currentDataPoints,
+        currentGroups = [],
+        previousPoint = null,
+        dashboardDataUrl = '/api/data/',
+        dashboardId = "dev_test";
 
     // static
     var CPU_COLOR = "#00B7FF",
         MEM_COLOR = "#FFB700";
 
     // functions
+
+    if (dataId && dataId.length && dataId.length > 0)
+    {
+        dashboardId = dataId;
+    }
+
+    dashboardDataUrl = dashboardDataUrl + dashboardId;
 
     /**
      *  Load data from JSON API
@@ -63,17 +73,30 @@ function safeHandler() {
      *  call itself in 30 seconds
      *
      */
+
+     // run at start
+    loadData();
+
+
     function loadData() {
 
-        $.get('/api/noc/ux').success( function( inData ) {
+        $.get(dashboardDataUrl).success( function( inData ) {
 
-            if (inData && inData.length > 0) {
+            console.log("performed loadData");
+            console.log(inData);
 
-                currentData = inData;
+            if (inData && inData.servers && inData.servers.length > 0) {
 
-                loadBarUI(currentData);
-                loadGaugesUI(currentData);
-                loadSortUI(currentData);
+                console.log("inside load if of loadData");
+
+                currentDataPoints = inData.servers;
+                currentGroups = inData.groups || [];
+
+                console.log(currentDataPoints);
+
+                loadBarUI(currentDataPoints);
+                loadGaugesUI(currentDataPoints);
+                loadSortUI(currentDataPoints);
             }
         });
         setTimeout(function() { loadData(); }, 30000);
@@ -86,7 +109,7 @@ function safeHandler() {
      * loads the bar graph onto the div element #cpubar
      * call flot with $.plot to dynamically render the bar graph
      * bind click and hover functions to the div element
-     * @param curData = currentData after refreshed
+     * @param curData = currentDataPoints after refreshed
      */
     function loadBarUI(curData) {
 
@@ -106,9 +129,9 @@ function safeHandler() {
         $("#cpubar").bind("plothover", function (event, pos, item) {
             if (item)
             {
-                if (previousPoint != item.dataIndex && item.dataIndex < currentData.length)
+                if (previousPoint != item.dataIndex && item.dataIndex < currentDataPoints.length)
                 {
-                    var server = currentData[item.dataIndex];
+                    var server = currentDataPoints[item.dataIndex];
 
                     var text = $("#flotTip").text();
                     $("#flotTip").text(server.server + ": " + text);
@@ -125,7 +148,7 @@ function safeHandler() {
      * setup ticks(xaxis values) manually to override the default
      * use tooltip flot plugin to generate it.
      *
-     * @param input = currentData after being refreshed
+     * @param input = currentDataPoints after being refreshed
      * @returns { data, options }
      */
     function loadBarData(input) {
@@ -204,9 +227,9 @@ function safeHandler() {
      */
     function loadDrillDown(item) {
 
-        if (item.dataIndex < currentData.length)
+        if (item.dataIndex < currentDataPoints.length)
         {
-            var server = currentData[item.dataIndex];
+            var server = currentDataPoints[item.dataIndex];
 
             // #drillDownHolder
             $("#drilldownModal").show();
@@ -485,9 +508,9 @@ function safeHandler() {
 
     function getIdByName(name) {
 
-        for(var i = 0; i < currentData.length; i++)
+        for(var i = 0; i < currentDataPoints.length; i++)
         {
-            if (currentData[i].server == name)
+            if (currentDataPoints[i].server == name)
             {
                 console.log("i:" + i);
                 return i;
@@ -529,16 +552,17 @@ function safeHandler() {
 Overview of json data
 
  [
- {
- "server": "moc-lx00009001",
- "data": [
- {
- "time": 1397860792000,
- "cpu": 14.43,
- "mem": 28.34
- }
- ]
- }
+    {
+        "server": "moc-lx00009001",
+        "data": [
+            {
+                "time": 1397860792000,
+                "cpu": 14.43,
+                "mem": 28.34
+            }
+        ],
+        "group": 0
+    }
  ]
 
  */

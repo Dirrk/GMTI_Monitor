@@ -16,3 +16,9 @@ exports.index = function(req, res){
              }
   );
 };
+
+exports.manage = function (req, res) {
+
+    res.send("Good job");
+
+};
