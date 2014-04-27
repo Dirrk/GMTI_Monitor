@@ -91,8 +91,9 @@ else {
         app.post('/api/update', api.update);  // Servers send data
         app.post('/api/data', api.data);  // called to get data about groups of servers
         app.get('/api/data/:id', api.getData); // called from built dashboards
-        app.post('/api/groups', api.groups); // called to get list of groups
-        app.post('/api/servers', api.servers); // called to get list of servers
+        app.get('/groups', api.groups); // called to get list of groups
+        app.get('/servers', api.servers); // called to get list of servers
+        app.get('/dashboards', api.dashboards);
         app.get('/save', api.save); // called to initiate a save
         app.post('/manage', checkAuth, api.manage); // save manage stuff
 

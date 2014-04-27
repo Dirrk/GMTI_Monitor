@@ -103,7 +103,7 @@ exports.update = function(req, res) {
                         data: []
                     }
                 );
-            } else if (!servers[found].group || servers[found].group < 0) {
+            } else if (servers[found].group !== undefined || servers[found].group !== null || servers[found].group < 0) {
 
                 // new server will always have this old servers may not have this data because pre vrc1.3 did not have the group info in data.json
                 servers[found].group = lookUpGroup(server);
@@ -136,6 +136,7 @@ exports.update = function(req, res) {
 
 exports.save = function(req, res) {
     res.send(200);
+    nconf.use('db').save();
     exports.saveToDisk(5);
 };
 
@@ -210,12 +211,16 @@ exports.getData = function (req, res) {
 
 exports.groups = function (req, res) {
 
-    res.send("Groups");
+    res.json(nconf.get('db:groups'));
 };
 
 exports.servers = function (req, res) {
 
-    res.send("Servers");
+    res.json(nconf.get('db:servers'));
+};
+
+exports.dashboards = function (req, res) {
+    res.json(nconf.get('db:dashboards'));
 };
 
 /*
@@ -323,15 +328,21 @@ function lookUpGroup(serverName) {
 
     var servers = nconf.get('db:servers');
 
-
     for (var i = 0; i < servers.length; i++)
     {
         if (serverName == servers[i].server)
         {
-
+            servers[i].lastUpdate = new Date().getTime();
+            nconf.set('db:servers', servers);
             return servers[i].group;
         }
     }
+    servers.push({
+        server: serverName,
+        group: -1,
+        lastUpdate: new Date().getTime()
+                 });
+    nconf.set('db:servers', servers);
     return -1;
 };
 
