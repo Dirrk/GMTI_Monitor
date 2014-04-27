@@ -80,6 +80,8 @@ function safeHandler(dataId) {
 
     function loadData() {
 
+        console.log("Start: " + new Date().getTime());
+
         $.get(dashboardDataUrl).success( function( inData ) {
 
             console.log("performed loadData");
@@ -92,14 +94,16 @@ function safeHandler(dataId) {
                 currentDataPoints = inData.servers;
                 currentGroups = inData.groups || [];
 
-                console.log(currentDataPoints);
+                console.log("Mid: " + new Date().getTime());
 
                 loadBarUI(currentDataPoints);
                 loadGaugesUI(currentDataPoints);
                 loadSortUI(currentDataPoints);
+                loadGroupsAverageTimeGraph(currentDataPoints, currentGroups);
+                console.log("End: " + new Date().getTime());
             }
         });
-        setTimeout(function() { loadData(); }, 30000);
+        setTimeout(function() { loadData(); }, 15000);
     };
 
     /**
@@ -477,6 +481,165 @@ function safeHandler(dataId) {
     };
 
 
+    function loadGroupsAverageTimeGraph(curData, groups) {
+
+        // first find the server(s) with the most amount of data then find the server with the newest time stamp from the servers with most data
+        // base the time values for all points on that servers times
+        var timeArray = findLongestDataAndNewest(curData);
+
+        // base the time values for all points on that servers times
+        // final values
+
+        var data = splitIntoGroupsAndAverage(curData, groups, timeArray.length);
+
+        // copy the array with the time values for 2*numGroups
+        // split the curData into the proper groups and find the average of each time point.
+
+        var plotData = [];
+        for(var i = 0; i < data.length; i++)
+        {
+
+            // cpu line for this group
+            var cpuLine = {
+                label: "CPU: " + data[i].groupName,
+                data: []
+            };
+
+            // memory line for this group
+            var memLine = {
+                label: "MEM: " + data[i].groupName,
+                data: []
+            };
+
+            for (var j = 0; j < data[i].cpuData.length && j  < timeArray.length; j++)
+            {
+                cpuLine.data.push([timeArray[j], data[i].cpuData[j]]);
+                memLine.data.push([timeArray[j], data[i].memData[j]]);
+            }
+            plotData.push(memLine);
+            plotData.push(cpuLine);
+
+        }
+
+        var options = {
+
+            grid: {
+                  hoverable: true
+            },
+            xaxis: {
+                mode: "time",
+                timezone: "browser",
+                timeformat: "%H:%M:%S"
+            },
+            yaxis: {
+                min: 0,
+                max: 100,
+                tickSize: 20
+            },
+            lines: {
+                show: true
+            },
+            points: {
+                show: false
+            },
+            tooltip: true,
+            tooltipOpts: {
+                content: "%y.2%"
+            }
+        };
+
+        console.log(plotData);
+
+        $.plot($("#groupAverages"), plotData, options);
+
+        // plot!
+
+
+    };
+
+    function splitIntoGroupsAndAverage(curData, groups, size) {
+
+        var ret = [];
+
+        for (var i = 0; i < groups.length; i++)
+        {
+            var temp = {
+                groupName: groups[i].name,
+                groupId: groups[i].id,
+                servers: [],
+                cpuData: [],
+                memData: [],
+                counts: []
+            };
+            // fill data with empty set
+            for (var h = 0; h < size; h++)
+            {
+                temp.cpuData[h] = 0.00;
+                temp.memData[h] = 0.00;
+                temp.counts[h] = 0;
+            }
+
+            // place all servers in this group into temp
+            for (var j = 0; j < curData.length; j++)
+            {
+                if (curData[j].group == temp.groupId)
+                {
+                    temp.servers.push(curData[j]);
+                }
+            }
+
+            // iterate through the servers in temp
+            for (var k = 0; k < temp.servers.length; k++)
+            {
+
+                // iterate through the data in each server
+                for (var m = temp.servers[k].data.length - 1, n = size - 1; m >= 0; m--)
+                {
+                    temp.cpuData[n] = temp.cpuData[n] + temp.servers[k].data[m].cpu;
+                    temp.memData[n] = temp.memData[n] + temp.servers[k].data[m].mem;
+                    temp.counts[n] = temp.counts[n] + 1;
+                    n--;
+                }
+
+            }
+
+            // finally iterate through and calculate the averages
+            for (var p = 0; p < size; p++)
+            {
+                if (temp.counts[p] > 0)
+                {
+                    temp.cpuData[p] = temp.cpuData[p] / temp.counts[p];
+                    temp.memData[p] = temp.memData[p] / temp.counts[p];
+                }
+            }
+
+            console.log("Temp: " + temp);
+            ret.push(temp);
+
+        }
+
+        return ret;
+
+    }
+
+
+    function findLongestDataAndNewest(curData) {
+
+        var ret = [];
+        var sortedServers = sortServersByDataLength(curData);
+        if (sortedServers.length > 0) {
+
+            var myServer = sortedServers[0];
+
+            for (var i = 0; i < myServer.data.length; i++) {
+                ret.push(myServer.data[i].time);
+            }
+        }
+        return ret;
+
+    }
+
+
     /**
      * Goes through current data and returns all servers with their latest data point
      *
@@ -520,6 +683,19 @@ function safeHandler(dataId) {
         return -1;
 
     };
+
+    function sortServersByDataLength(servers) {
+
+        var servers2 = servers.sort(function (a, b) {
+
+            return b.data.length - a.data.length;
+
+        });
+        return servers2;
+
+    };
+
+
 
     $.external_callLoadDrillDown = function (serverName) {
 

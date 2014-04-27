@@ -59,7 +59,7 @@ block append content
                             tr.selectable(ng-repeat="server in MemServers")
                                 td(ng-click="drillDown(server.server)") {{server.server}}
                                 td(ng-click="drillDown(server.server)") {{server.mem}}
-            // #timeChart.flotMediumWShortH
+            #groupAverages.flotMediumWShortH
 
     #drilldownModal
         #modalClose

@@ -139,6 +139,14 @@ exports.save = function(req, res) {
     exports.saveToDisk(5);
 };
 
+exports.reload = function(req, res) {
+
+    res.send(200);
+    exports.saveToDisk(5);
+    nconf.use('db').reload();
+
+};
+
 exports.manage = function (req, res) {
   res.send("Manage");
 };

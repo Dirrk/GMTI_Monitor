@@ -83,9 +83,10 @@
 .flotMediumWShortH {
   width: 900px;
   height: 300px;
-  margin: 1em 1em 1em auto;
+  margin: 1em 1em 1em 25px;
   overflow-x: hidden;
   display: inline-block;
+  float: right;
 }
 .flot-y-axis .flot-tick-label {
   color: white;
