@@ -49,6 +49,7 @@ function safeHandler(dataId) {
     var currentDataPoints,
         currentGroups = [],
         previousPoint = null,
+        previousPoint1 = null,
         dashboardDataUrl = '/api/data/',
         dashboardId = "dev_test";
 
@@ -516,6 +517,7 @@ function safeHandler(dataId) {
                 cpuLine.data.push([timeArray[j], data[i].cpuData[j]]);
                 memLine.data.push([timeArray[j], data[i].memData[j]]);
             }
+
             plotData.push(memLine);
             plotData.push(cpuLine);
 
@@ -524,7 +526,8 @@ function safeHandler(dataId) {
         var options = {
 
             grid: {
-                  hoverable: true
+                  hoverable: true,
+                  clickable: true
             },
             xaxis: {
                 mode: "time",
@@ -548,9 +551,21 @@ function safeHandler(dataId) {
             }
         };
 
-        console.log(plotData);
+        var plot = $.plot($("#groupAverages"), plotData, options);
 
-        $.plot($("#groupAverages"), plotData, options);
+        $("#groupAverages").bind("plotclick", function (event, pos, item) {
+            if (item)
+            {
+                var cpuOrMem = item.seriesIndex % 2; // 0 = MEM 1 = CPU
+                var newIndex = item.seriesIndex;
+                if (cpuOrMem === 1) {
+                    newIndex = newIndex - 1;
+                }
+                newIndex = newIndex / 2;
+                drillDownGroup(data[newIndex], timeArray, cpuOrMem);
+            }
+        });
+
 
         // plot!
 
@@ -694,6 +709,97 @@ function safeHandler(dataId) {
         return servers2;
 
     };
+
+
+    function drillDownGroup(group, timeArray, option) {
+
+        console.log("drillDownGroup");
+        console.log(group);
+        var label = " (CPU)";
+        if (option === 0) {
+            label = " (Memory)";
+        }
+        console.log(label);
+
+        $("#drilldownModal").show();
+        $("#drilldownModal").css('opacity', 0.95);
+        $("#drillDownTitle").text("Group: " + group.groupName + label);
+
+
+        var timeData = loadMultipleTimeData(group.servers, timeArray, option);
+        var aPlot = $.plot($("#drillDownHolder"), timeData.data, timeData.options);
+
+        $("#drillDownHolder").bind("plothover", function (event, pos, item) {
+            if (item)
+            {
+                if (previousPoint1 != item.seriesIndex && item.seriesIndex < group.servers.length)
+                {
+                    var server = group.servers[item.seriesIndex];
+
+                    var text = $("#flotTip").text();
+                    $("#flotTip").text(server.server + ": " + text);
+                }
+            }
+        });
+    }
+
+    function loadMultipleTimeData(servers, timeArray, option) {
+
+        var plotData = [];
+        for(var i = 0; i < servers.length; i++)
+        {
+
+            var newLine = {
+                data: []
+            };
+
+
+            for (var j = 0; j < servers[i].data.length && j  < timeArray.length; j++)
+            {
+                if (option === 1) {
+                    newLine.data.push([timeArray[j], servers[i].data[j].cpu]);
+                } else {
+                    newLine.data.push([timeArray[j], servers[i].data[j].mem]);
+                }
+            }
+
+            plotData.push(newLine);
+        }
+
+        var options = {
+
+            grid: {
+                hoverable: true,
+                clickable: true
+            },
+            xaxis: {
+                mode: "time",
+                timezone: "browser",
+                timeformat: "%H:%M:%S"
+            },
+            yaxis: {
+                min: 0,
+                max: 100,
+                tickSize: 20
+            },
+            lines: {
+                show: true
+            },
+            points: {
+                show: false
+            },
+            tooltip: true,
+            tooltipOpts: {
+                content: "%y.2%"
+            }
+        };
+
+        return {
+            data: plotData,
+            options: options
+        }
+
+    }
 
 
 
