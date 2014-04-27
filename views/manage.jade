@@ -1,0 +1,90 @@
+//
+   Created by Dirrk on 4/27/2014.
+
+extends layout
+
+block append style
+    link(rel='stylesheet', href='/stylesheets/style.css')
+    link(rel='stylesheet', href='/stylesheets/manage.css')
+    link(rel="stylesheet", href="http://netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css")
+
+block append header
+
+    .nav
+        h3
+            a(href="/") GMTI
+
+block append content
+
+    #manage(ng-app="manageApp", ng-controller="manageCntrl")
+        #tabs
+            tabset
+                tab(heading="Servers")
+                    #servers.innerTab
+
+                        #topArea
+                            #filterArea
+                                label Search:&nbsp
+                                input(ng-model="searchText")
+                                button(ng-click="addServer") add
+                            #performTask
+                                label Perform Task &nbsp
+                                select(ng-options="task.name for task in serverTasks", ng-model="taskSelected")
+                                button Run
+
+                        table.table
+                            thead
+                                th Server Name
+                                th Group
+                                th Activity
+                                th Options
+
+                            tbody
+                                tr(ng-repeat="server in servers | filter:searchText")
+                                    td {{server.server}}
+                                    td
+                                        select(ng-options="group.name for group in groups", ng-model="selection", value="{{server.group}}")
+
+                                    td {{server.lastUpdate}}
+                                    td
+                                        .spaceout
+                                            input(type="checkbox")
+                                            button Delete
+                                            button Save
+
+                tab(heading="Groups")
+                    #groups.innerTab
+
+                        #createGroup
+                            label Create: &nbsp
+                            input(ng-model="createGroup")
+                            button(ng-click="addGroup") add
+                        #groupTable
+                            table.table
+                                thead
+                                    th ID#
+                                    th Group Name
+                                    th Options
+                                tbody
+                                    tr(ng-repeat="group in groups")
+                                        td
+                                            input(type="text", value="{{group.id}}", readonly)
+                                        td
+                                            input(type="text", value="{{group.name}}")
+                                        td
+                                            button(ng-click="saveGroup") Save
+
+
+
+                        p Groups go here
+                tab(heading="Dashboards")
+                    #dashboards.innerTab
+                        p Dashboards go here
+
+
+
+block append scripts
+    script(type='text/javascript', src='/javascripts/flot/jquery.min.js')
+    script(type='text/javascript', src='/javascripts/angular.js')
+    script(type='text/javascript', src='/javascripts/ui-bootstrap-tpls-0.9.0.min.js')
+    script(type='text/javascript', src='/javascripts/manage.js')
