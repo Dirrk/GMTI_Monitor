@@ -13,6 +13,9 @@ manageApp.controller('manageCntrl', ['$scope', '$http',
        $scope.servers = [];
        $scope.groups = [];
        $scope.dashboards = [];
+       $scope.searchText = '';
+       $scope.serverCreateName = '';
+
 
        $scope.serverTasks = [
            { name: "Select all"},
@@ -20,7 +23,6 @@ manageApp.controller('manageCntrl', ['$scope', '$http',
        ];
 
        $scope.taskSelected = $scope.serverTasks[0];
-       console.log($scope.taskSelected);
 
        $http.get('/groups', {cache: false}).success(function(data) {
            $scope.groups = data;
@@ -28,7 +30,7 @@ manageApp.controller('manageCntrl', ['$scope', '$http',
        $http.get('/servers', {cache: false}).success(function(data) {
             for(var i = 0; i < data.length; i++)
             {
-                data[i].lastUpdate = new Date(data[i].lastUpdate).toUTCString();
+                data[i].lastUpdate = new Date(data[i].lastUpdate).toLocaleString();
             }
            $scope.servers = data;
        });
@@ -36,6 +38,21 @@ manageApp.controller('manageCntrl', ['$scope', '$http',
            $scope.dashboards = data;
        });
 
+       $scope.addServer = function () {
+           var text = $("#serverSearch").val();
+           showModal("#serverModal");
+           $scope.serverCreateName = text || '';
+           $scope.serverCreateGroup = $scope.groups[0] || $scope.serverCreateGroup;
+       };
+
+       $scope.createServer = function () {
+
+           var serverList = $scope.serverCreateName;
+           var groupId = $scope.serverCreateGroup;
+           console.log(serverList);
+           console.log(groupId.id);
+
+       };
 
 
        function groupNameById(id) {
@@ -50,3 +67,18 @@ manageApp.controller('manageCntrl', ['$scope', '$http',
 
    }]
 );
+
+
+function showModal(modalId) {
+    if (!modalId) {
+        var modalId = ".radamodal";
+    }
+
+    $(modalId).show();
+    $(modalId).css('opacity', .98);
+
+    $(".radamodalClose").click(function() {
+        $(modalId).hide();
+        $(modalId).css('opacity', 0);
+    });
+}

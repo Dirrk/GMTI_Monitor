@@ -280,6 +280,11 @@ function safeHandler(dataId) {
                    timezone: "browser",
                    timeformat: "%H:%M:%S"
             },
+            yaxis: {
+                min: 0,
+                max: 100,
+                tickSize: 10
+            },
             lines: {
                    show: true
             },
@@ -740,6 +745,15 @@ function safeHandler(dataId) {
                     $("#flotTip").text(server.server + ": " + text);
                 }
             }
+        });
+
+        // drill down inside a drill down...
+        $("#drillDownHolder").bind("plotclick", function (event, pos, item) {
+           if (item) {
+               var server = group.servers[item.seriesIndex];
+               $.external_callLoadDrillDown(server.server);
+
+           }
         });
     }
 

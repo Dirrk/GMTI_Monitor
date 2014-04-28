@@ -95,7 +95,10 @@ else {
         app.get('/servers', api.servers); // called to get list of servers
         app.get('/dashboards', api.dashboards);
         app.get('/save', api.save); // called to initiate a save
+
         app.post('/manage', checkAuth, api.manage); // save manage stuff
+        app.post('/servers/create', checkAuth, api.createServer); // create server
+
 
         //      * catch everything else
         app.get('/*', dashboard.indexed);

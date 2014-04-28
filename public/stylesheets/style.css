@@ -54,3 +54,60 @@ h5 {
 .department a {
   text-decoration: none;
 }
+.radamodal {
+  /*
+    define the div to be this
+    margin-top: -ypx;
+    margin-left: -xpx;
+  */
+  left: 50%;
+  top: 50%;
+  z-index: 100;
+  position: fixed;
+  background-color: white;
+  color: black;
+  opacity: 0;
+  display: none;
+  -webkit-transition: opacity 400ms ease-in;
+  -moz-transition: opacity 400ms ease-in;
+  transition: opacity 400ms ease-in;
+  border: #282828 thin solid;
+  border-top-left-radius: 15px;
+  border-bottom-right-radius: 15px;
+  border-bottom-left-radius: 15px;
+  padding: 15px;
+  overflow: visible;
+}
+.radamodalClose {
+  position: absolute;
+  font-size: large;
+  font-style: normal;
+  right: -17px;
+  top: -17px;
+  font-weight: normal;
+  background-color: #282828;
+  border: white thin solid;
+  color: white;
+  margin: 7px;
+  width: 32px;
+  border-radius: 16px;
+  text-align: center;
+  cursor: default;
+}
+.stackedForm {
+  width: 95%;
+  margin: 1em auto 1em auto;
+}
+.stackedForm label {
+  display: block;
+  font-weight: 500;
+}
+.stackedForm input,
+.stackedForm select,
+.stackedForm textarea {
+  width: 100%;
+  font-size: 14pt;
+  border-radius: 5px;
+  margin: 0 auto 1em auto;
+  padding: 5px;
+}

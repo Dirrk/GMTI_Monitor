@@ -25,8 +25,8 @@ block append content
                         #topArea
                             #filterArea
                                 label Search:&nbsp
-                                input(ng-model="searchText")
-                                button(ng-click="addServer") add
+                                input(ng-model="searchText", id="serverSearch")
+                                button(ng-click="addServer()") add
                             #performTask
                                 label Perform Task &nbsp
                                 select(ng-options="task.name for task in serverTasks", ng-model="taskSelected")
@@ -52,6 +52,22 @@ block append content
                                             button Delete
                                             button Save
 
+                        #serverModal.radamodal
+                            .radamodalClose
+                                span X
+                            #serverModalTitle
+                                h4 Add a new server
+                            #serverModalForm
+                                .stackedForm
+                                    label(popover="add multiple by placing each server on a new line",  popover-trigger="mouseenter", popover-placement="left") Server(s) Name:
+                                    textarea(ng-model="serverCreateName", ng-required)
+                                .stackedForm
+                                    label Group:
+                                    select(ng-options="group.name for group in groups", ng-model="serverCreateGroup", ng-required)
+                            #serverModalButtons
+                                button(ng-click="createServer()") Create
+
+
                 tab(heading="Groups")
                     #groups.innerTab
 
@@ -75,11 +91,58 @@ block append content
                                             button(ng-click="saveGroup") Save
 
 
-
-                        p Groups go here
                 tab(heading="Dashboards")
                     #dashboards.innerTab
-                        p Dashboards go here
+
+                        #createDashBoard
+
+                            .dashboard-container
+                                label ID:
+                                input(id="createDashID", placeholder="example_no_spaces")
+                                label Front:
+                                select(id="createdashFront")
+                                    option(value="1") MOC
+                                    option(value="2") PHX
+                                label Name:
+                                input(id="dashName-create", placeholder="Example abcd!")
+                                label Groups
+                                input(id="dashGroups-create", placeholder="Need to set this up properly")
+                                br
+                                label Description:
+                                br
+                                textarea(id="dashDesc-create", placeholder="Keep it short and simple")
+                                .saveArea
+                                    button(id="dashDesc-create") Create
+
+
+                        #listDashboards
+                            accordion(close-others="false")
+                                accordion-group(ng-repeat="dashboard in dashboards", heading="{{dashboard.id}} :: {{dashboard.name}} :: {{dashboard.description}}")
+                                    .dashboard-container
+                                        label ID:
+                                        input(id="dashID-{{dashboard.id}}", value="{{dashboard.id}}")
+                                        label Front:
+                                        select(id="dashFront-{{dashboard.id}}")
+                                            option(value="1") MOC
+                                            option(value="2") PHX
+                                        label Name:
+                                        input(id="dashName-{{dashboard.id}}", value="{{dashboard.name}}")
+                                        label Groups
+                                        input(id="dashGroups-{{dashboard.id}}", value="{{dashboard.groups}}")
+                                        br
+                                        label Description:
+                                        br
+                                        textarea(id="dashDesc-{{dashboard.id}}", value="{{dashboard.description}}")
+                                        .saveArea
+                                            button(id="dashDesc-{{dashboard.id}}") Save
+
+
+
+
+
+
+
+
 
 
 

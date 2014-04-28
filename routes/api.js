@@ -58,7 +58,7 @@ exports.update = function(req, res) {
         res.send(200);
 
     } catch (e) {
-        res.send(500);
+        res.send(400);
         return;
     }
 
@@ -223,6 +223,59 @@ exports.dashboards = function (req, res) {
     res.json(nconf.get('db:dashboards'));
 };
 
+exports.createServer = function (req, res) {
+
+    var newServers = [],
+        assignedGroupId = -1;
+
+    if (req.body.servers !== null && req.body.servers !== undefined) {
+
+        try {
+            if (util.isArray(req.body.servers)) {
+
+                newServers = req.body.servers;
+
+            } else {
+
+                newServers.push(req.body.servers.toString());
+            }
+        }
+        catch (e) {
+            console.log(e);
+            res.send(400);
+            return;
+        }
+
+        if (req.body.group !== null && req.body.group !== undefined)
+        {
+            try {
+                assignedGroupId = parseInt(req.body.group);
+                assignedGroupId = getGroupById(assignedGroupId).id || -1;
+            } catch (ignore) {
+                assignedGroupId = -1;
+            }
+        }
+
+        var servers = nconf.get('db:servers');
+        for (var i = 0; i < newServers.length; i++)
+        {
+            servers.push({
+                server: newServers[i],
+                group: assignedGroupId
+            });
+        }
+        nconf.set('db:servers', servers);
+        res.send(200);
+        exports.saveToDisk(5);
+
+
+    } else {
+        res.send(400);
+    }
+
+};
+
+
 /*
  *   Local / Exports
  *
@@ -252,12 +305,16 @@ exports.saveToDisk = function saveToDisk (count) {
 
         cleanUpData();
 
-        data.save(function(err) {
+        nconf.use('db').save(function(err) { // save db first
             if (err) {
                 console.log(err);
             }
-            data.set('lock', false);
-
+            nconf.use('data').save(function(err) { // then data
+               if (err) {
+                   console.log(err);
+               }
+               data.set('lock', false);
+            });
         });
 
     } else {
