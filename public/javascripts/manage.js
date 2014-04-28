@@ -24,6 +24,7 @@ manageApp.controller('manageCntrl', ['$scope', '$http',
            { name: "Deselect all", task: function () { selectAll(false) }},
            { name: "Save selected", task: function () { saveSelected() }},
            { name: "Delete selected", task: function () { delSelected() }},
+           { name: "Select unassigned servers", task: function ()  { selectNew() }},
            { name: "Assign group to selected", task: function () { editSelected() }}
        ];
 
@@ -182,6 +183,15 @@ manageApp.controller('manageCntrl', ['$scope', '$http',
 
            console.log("show");
 
+       }
+       function selectNew() {
+           for (var i = 0; i < $scope.servers.length; i++)
+           {
+               if (isNaN($scope.servers[i].group) === false && $scope.servers[i].group < 0)
+               {
+                   $scope.servers[i].selected = true;
+               }
+           }
        }
 
        $scope.serverEditMassGroup = function () {
