@@ -16,11 +16,15 @@ manageApp.controller('manageCntrl', ['$scope', '$http',
        $scope.dashboards = [];
        $scope.searchText = '';
        $scope.serverCreateName = undefined;
+       $scope.serverEditGroup = undefined;
 
 
        $scope.serverTasks = [
-           { name: "Select all"},
-           { name: "Deselect all"}
+           { name: "Select all", task: function () { selectAll(true) } },
+           { name: "Deselect all", task: function () { selectAll(false) }},
+           { name: "Save selected", task: function () { saveSelected() }},
+           { name: "Delete selected", task: function () { delSelected() }},
+           { name: "Assign group to selected", task: function () { editSelected() }}
        ];
 
        $scope.taskSelected = $scope.serverTasks[0];
@@ -28,11 +32,13 @@ manageApp.controller('manageCntrl', ['$scope', '$http',
        $http.get('/groups', {cache: false}).success(function(data) {
            $scope.groups = data;
        });
-       $http.get('/servers', {cache: false}).success(function(data) {
-
-           $scope.servers = cleanData(data);
-
-       });
+       getServers();
+       function getServers() {
+           $http.get('/servers', {cache: false}).success(function (data) {
+               $scope.servers = cleanData(data);
+            }
+           );
+       }
        $http.get('/dashboards', {cache: false}).success(function(data) {
            $scope.dashboards = data;
        });
@@ -50,10 +56,11 @@ manageApp.controller('manageCntrl', ['$scope', '$http',
            var serverList = $scope.serverCreateName.split('\n');
            var groupId = $scope.serverCreateGroup;
 
-           $http.json('/servers/create', { servers: serverList, group: groupId }).success(function(data) {
+
+           $http.post('/servers/create', { servers: serverList, group: groupId.id }).success(function(data) {
                 if (data && data.length && data.length > 0)
                 {
-                    $scope.servers.concat(cleanData(data));
+                    $scope.servers = $scope.servers.concat(cleanData(data));
                 }
                 console.log("Success");
            }).error(function(data) {
@@ -61,13 +68,150 @@ manageApp.controller('manageCntrl', ['$scope', '$http',
            });
 
        };
+
+       $scope.saveServer = function(id) {
+
+           var server = $scope.servers[id];
+
+           if (isNaN(server.group) === true || typeof server.group == typeof {}) {
+               server.group = server.group.id;
+           }
+           var data = [server];
+
+           console.log("ID: " + id);
+           console.log("Server:" + JSON.stringify($scope.servers[id]));
+
+           performServerAction('UPDATE', data);
+
+       };
+       $scope.delServer = function(id) {
+
+           var server = $scope.servers[id];
+
+           var data = [server];
+
+           console.log("ID: " + id);
+           console.log("Server:" + JSON.stringify($scope.servers[id]));
+
+           performServerAction('DELETE', data, function () {
+               console.log("Deleted server");
+               $scope.servers.splice(id, 1);
+           });
+
+       };
+       $scope.runTask = function () {
+           $scope.taskSelected.task();
+       };
+
        function cleanData(data) {
            for(var i = 0; i < data.length; i++)
            {
+
                data[i].lastUpdate = new Date(data[i].lastUpdate).toLocaleString();
+               data[i].selected = false;
+
            }
            return data;
        }
+       function performServerAction(type, data, callback)
+       {
+           $http.post('/manage/server', { command: type, servers: data }).success(function (data) {
+
+               if (typeof callback === 'function') {
+                   callback(null, data);
+               } else {
+                   console.log("success");
+               }
+
+           }).error(function (data) {
+               if (typeof callback === 'function') {
+                   callback(data);
+               } else {
+                   console.log("success");
+               }
+           });
+       }
+
+       function selectAll(bool) {
+            console.log("selectAll");
+           for (var i = 0; i < $scope.servers.length; i++)
+           {
+               $scope.servers[i].selected = bool;
+           }
+       }
+
+       function saveSelected() {
+           var servers = $scope.servers;
+           var data = [];
+           for (var i = 0; i < servers.length; i++)
+           {
+               if (servers[i].selected === true)
+               {
+                   if (isNaN(servers[i].group) === true || typeof servers[i].group == typeof {}) {
+                       servers[i].group = servers[i].group.id;
+                   }
+                   data.push(servers[i]);
+               }
+           }
+           console.log("saveSelected: ");
+           console.log(data);
+           performServerAction('UPDATE', data, function () {
+               selectAll(false);
+           });
+       }
+
+       function delSelected() {
+           var servers = $scope.servers;
+           var data = [];
+           for (var i = 0; i < servers.length; i++)
+           {
+               if (servers[i].selected === true)
+               {
+                   data.push(servers[i]);
+               }
+           }
+           console.log("delSelected: ");
+           console.log(data);
+           performServerAction('DELETE', data, function() {
+               getServers();
+           });
+       }
+
+       function editSelected() {
+           showModal("#serverMassGroupChange");
+
+           console.log("show");
+
+       }
+
+       $scope.serverEditMassGroup = function () {
+
+           console.log($scope.serverEditGroup);
+
+           var servers = $scope.servers;
+           var data = [];
+           var groupId = $scope.serverEditGroup.id;
+           for (var i = 0; i < servers.length; i++) {
+
+               if (servers[i].selected === true)
+               {
+                   var server = servers[i];
+                   server.group = groupId;
+                   data.push(server);
+               }
+
+           }
+           console.log("editSelected: ");
+           console.log(data);
+           performServerAction('UPDATE', data, function () {
+               selectAll(false);
+               $("#serverMassGroupChange").hide();
+               $("#serverMassGroupChange").css('opacity', 0);
+           });
+
+       };
+       $("#serverMassGroupChange").hide();
+
 
    }]
 );

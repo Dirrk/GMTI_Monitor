@@ -152,6 +152,38 @@ exports.manage = function (req, res) {
   res.send("Manage");
 };
 
+exports.manageServer = function (req, res) {
+
+    if (req.body.command && util.isArray(req.body.servers)) {
+
+        switch (req.body.command) {
+
+            case 'UPDATE':
+
+                for (var i = 0; i < req.body.servers.length; i++) {
+                    updateServerData(req.body.servers[i]);
+                }
+                break;
+            case 'DELETE':
+                for (var i = 0; i < req.body.servers.length; i++) {
+                    deleteServerData(req.body.servers[i]);
+                }
+                break;
+            case 'CREATE':
+                exports.createServer(req, res);
+                return;
+            default:
+                res.send(400);
+                return;
+        }
+        exports.saveToDisk(5);
+        res.send(200);
+    } else {
+        console.log(req.body);
+        res.send(400);
+    }
+};
+
 /*
 exports.uxData = function(req, res) {
 
@@ -257,15 +289,16 @@ exports.createServer = function (req, res) {
         }
 
         var servers = nconf.get('db:servers');
+        var tempServers = [];
         for (var i = 0; i < newServers.length; i++)
         {
-            servers.push({
+            tempServers.push({
                 server: newServers[i],
                 group: assignedGroupId
             });
         }
-        nconf.set('db:servers', servers);
-        res.send(200);
+        nconf.set('db:servers', servers.concat(tempServers));
+        res.json(tempServers);
         exports.saveToDisk(5);
 
 
@@ -496,4 +529,46 @@ function groupArray(arr) {
     }
     return ret;
 
+};
+
+function deleteServerData(server) {
+
+    var servers = nconf.get('db:servers');
+    var found = servers.length;
+    for(var i = 0; i < servers.length; i++)
+    {
+
+        if (server.server.toLowerCase() == servers[i].server.toLowerCase()) {
+
+            found = i;
+        }
+    }
+    if (found < servers.length)
+    {
+        servers.splice(found, 1);
+        nconf.set('db:servers', servers);
+        return true;
+    }
+    return false;
+};
+
+function updateServerData(server) {
+
+    var servers = nconf.get('db:servers');
+    for(var i = 0; i < servers.length; i++)
+    {
+
+        if (server.server.toLowerCase() == servers[i].server.toLowerCase()) {
+
+            console.log("updateServer found server");
+
+            if (server.group !== undefined && server.group !== null && isNaN(server.group) === false)
+            {
+                servers[i].group = server.group;
+                console.log("Changed server(" + server.server + ") to " + server.group);
+            }
+        }
+    }
+    nconf.set('db:servers', servers);
+    return true;
 };

@@ -69,7 +69,7 @@ else {
 
         // Connect / Express Middleware
         app.use(express.favicon(path.join(__dirname, "public/images/favicon.ico")));
-        app.use(express.logger('dev'));
+        app.use(express.logger());
         app.use(express.json());
         app.use(express.urlencoded());
         app.use(express.methodOverride());
@@ -97,8 +97,9 @@ else {
         app.get('/save', api.save); // called to initiate a save
 
         app.post('/manage', checkAuth, api.manage); // save manage stuff
-        app.post('/servers/create', checkAuth, api.createServer); // create server
+        app.post('/servers/create', checkAuth, api.createServer); // create server (maybe put this back into manage)
 
+        app.post('/manage/server', checkAuth, api.manageServer); // manage server
 
         //      * catch everything else
         app.get('/*', dashboard.indexed);

@@ -30,7 +30,7 @@ block append content
                             #performTask
                                 label Perform Task &nbsp
                                 select(ng-options="task.name for task in serverTasks", ng-model="$parent.taskSelected")
-                                button Run
+                                button(ng-click="$parent.runTask()") Run
 
                         table.table
                             thead
@@ -43,14 +43,14 @@ block append content
                                 tr(ng-repeat="server in servers | filter:$parent.searchText")
                                     td {{server.server}}
                                     td
-                                        select(ng-options="group.name for group in groups", ng-model="$parent.selection", value="{{server.group}}")
+                                        select(ng-options="group.name for group in groups", ng-model="server.group", value="{{server.group}}")
 
                                     td {{server.lastUpdate}}
                                     td
                                         .spaceout
-                                            input(type="checkbox")
-                                            button Delete
-                                            button Save
+                                            input(type="checkbox", ng-model="server.selected")
+                                            button(ng-click="delServer($index)") Delete
+                                            button(ng-click="saveServer($index)") Save
 
                         #serverModal.radamodal
                             .radamodalClose
@@ -65,7 +65,17 @@ block append content
                                     label Group:
                                     select(ng-options="group.name for group in groups", ng-model="$parent.serverCreateGroup")
                             #serverModalButtons
-                                button(ng-click="createServer()") Create
+                                button(ng-click="$parent.createServer()") Create
+
+                        #serverMassGroupChange.radamodal
+                            .radamodalClose
+                                span X
+                            #serverMassGroupChangeArea
+                                .stackedForm
+                                    label(popover="Change multiple servers groups to this group:",  popover-trigger="mouseenter", popover-placement="left") Select a group:
+                                    select(ng-options="group.name for group in groups", ng-model="$parent.serverEditGroup")
+                            #serverMassGroupChangeButtons
+                                button(ng-click="$parent.serverEditMassGroup()") Set Group
 
 
                 tab(heading="Groups")
@@ -135,15 +145,6 @@ block append content
                                         textarea(id="dashDesc-{{dashboard.id}}", value="{{dashboard.description}}")
                                         .saveArea
                                             button(id="dashDesc-{{dashboard.id}}") Save
-
-
-
-
-
-
-
-
-
 
 
 block append scripts
