@@ -29,11 +29,9 @@ manageApp.controller('manageCntrl', ['$scope', '$http',
            $scope.groups = data;
        });
        $http.get('/servers', {cache: false}).success(function(data) {
-            for(var i = 0; i < data.length; i++)
-            {
-                data[i].lastUpdate = new Date(data[i].lastUpdate).toLocaleString();
-            }
-           $scope.servers = data;
+
+           $scope.servers = cleanData(data);
+
        });
        $http.get('/dashboards', {cache: false}).success(function(data) {
            $scope.dashboards = data;
@@ -53,12 +51,23 @@ manageApp.controller('manageCntrl', ['$scope', '$http',
            var groupId = $scope.serverCreateGroup;
 
            $http.json('/servers/create', { servers: serverList, group: groupId }).success(function(data) {
+                if (data && data.length && data.length > 0)
+                {
+                    $scope.servers.concat(cleanData(data));
+                }
                 console.log("Success");
            }).error(function(data) {
                console.log("Error");
            });
 
        };
+       function cleanData(data) {
+           for(var i = 0; i < data.length; i++)
+           {
+               data[i].lastUpdate = new Date(data[i].lastUpdate).toLocaleString();
+           }
+           return data;
+       }
 
    }]
 );
