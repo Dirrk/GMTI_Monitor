@@ -534,6 +534,11 @@ function safeHandler(dataId) {
                   hoverable: true,
                   clickable: true
             },
+            legend: {
+
+                position: "sw",
+                backgroundOpacity:  0.8
+            },
             xaxis: {
                 mode: "time",
                 timezone: "browser",
