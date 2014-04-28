@@ -25,11 +25,11 @@ block append content
                         #topArea
                             #filterArea
                                 label Search:&nbsp
-                                input(ng-model="searchText", id="serverSearch")
-                                button(ng-click="addServer()") add
+                                input(ng-model="$parent.searchText", id="serverSearch")
+                                button(ng-click="$parent.addServer()") add
                             #performTask
                                 label Perform Task &nbsp
-                                select(ng-options="task.name for task in serverTasks", ng-model="taskSelected")
+                                select(ng-options="task.name for task in serverTasks", ng-model="$parent.taskSelected")
                                 button Run
 
                         table.table
@@ -40,10 +40,10 @@ block append content
                                 th Options
 
                             tbody
-                                tr(ng-repeat="server in servers | filter:searchText")
+                                tr(ng-repeat="server in servers | filter:$parent.searchText")
                                     td {{server.server}}
                                     td
-                                        select(ng-options="group.name for group in groups", ng-model="selection", value="{{server.group}}")
+                                        select(ng-options="group.name for group in groups", ng-model="$parent.selection", value="{{server.group}}")
 
                                     td {{server.lastUpdate}}
                                     td
@@ -60,10 +60,10 @@ block append content
                             #serverModalForm
                                 .stackedForm
                                     label(popover="add multiple by placing each server on a new line",  popover-trigger="mouseenter", popover-placement="left") Server(s) Name:
-                                    textarea(ng-model="serverCreateName", ng-required)
+                                    textarea#serverCreateName(ng-model="$parent.serverCreateName")
                                 .stackedForm
                                     label Group:
-                                    select(ng-options="group.name for group in groups", ng-model="serverCreateGroup", ng-required)
+                                    select(ng-options="group.name for group in groups", ng-model="$parent.serverCreateGroup")
                             #serverModalButtons
                                 button(ng-click="createServer()") Create
 
@@ -73,8 +73,8 @@ block append content
 
                         #createGroup
                             label Create: &nbsp
-                            input(ng-model="createGroup")
-                            button(ng-click="addGroup") add
+                            input(ng-model="$parent.createGroup")
+                            button(ng-click="$parent.addGroup") add
                         #groupTable
                             table.table
                                 thead
@@ -88,7 +88,7 @@ block append content
                                         td
                                             input(type="text", value="{{group.name}}")
                                         td
-                                            button(ng-click="saveGroup") Save
+                                            button(ng-click="$parent.saveGroup") Save
 
 
                 tab(heading="Dashboards")

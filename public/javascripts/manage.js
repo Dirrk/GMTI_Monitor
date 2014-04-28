@@ -6,15 +6,16 @@
 var manageApp = angular.module('manageApp', ['ui.bootstrap']);
 
 manageApp.controller('manageCntrl', ['$scope', '$http',
+
    function($scope, $http) {
 
-       console.log("Inside scope");
+
        $scope.navType = 'pills';
        $scope.servers = [];
        $scope.groups = [];
        $scope.dashboards = [];
        $scope.searchText = '';
-       $scope.serverCreateName = '';
+       $scope.serverCreateName = undefined;
 
 
        $scope.serverTasks = [
@@ -41,29 +42,23 @@ manageApp.controller('manageCntrl', ['$scope', '$http',
        $scope.addServer = function () {
            var text = $("#serverSearch").val();
            showModal("#serverModal");
-           $scope.serverCreateName = text || '';
+           $scope.serverCreateName = text;
            $scope.serverCreateGroup = $scope.groups[0] || $scope.serverCreateGroup;
        };
 
        $scope.createServer = function () {
+            console.log($scope.serverCreateName);
 
-           var serverList = $scope.serverCreateName;
+           var serverList = $scope.serverCreateName.split('\n');
            var groupId = $scope.serverCreateGroup;
-           console.log(serverList);
-           console.log(groupId.id);
+
+           $http.json('/servers/create', { servers: serverList, group: groupId }).success(function(data) {
+                console.log("Success");
+           }).error(function(data) {
+               console.log("Error");
+           });
 
        };
-
-
-       function groupNameById(id) {
-           for (var i = 0; i < $scope.groups.length;i++)
-           {
-               if ($scope.groups[i].id == id) {
-                   return $scope.groups[i].name;
-               }
-           }
-           return id;
-       }
 
    }]
 );
