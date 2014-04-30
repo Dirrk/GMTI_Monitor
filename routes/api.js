@@ -309,6 +309,66 @@ exports.createServer = function (req, res) {
 };
 
 
+exports.manageGroup = function (req, res) {
+
+    var groups = nconf.get('db:groups');
+    if (req.body.command && req.body.group) {
+
+        var group = req.body.group;
+        console.log(req.body);
+
+        switch (req.body.command) {
+
+            case 'UPDATE':
+
+                for (var i = 0; i < groups.length; i++) {
+
+                    if (group.id === groups[i].id) {
+                        groups[i].name = group.name;
+                    }
+                }
+                console.log(group);
+                nconf.set('db:groups', groups);
+                break;
+            case 'DELETE':
+
+                console.log("Deleting");
+                var found = groups.length;
+                for (var i = 0; i < groups.length; i++) {
+
+                    if (group.id === groups[i].id) {
+                        found = i;
+                    }
+                }
+                if (found < groups.length) {
+                    console.log("Deleting 1");
+                    groups.splice(found, 1);
+                }
+                nconf.set('db:groups', groups);
+
+                break;
+            case 'CREATE':
+
+                group.id = groups[groups.length - 1].id + 1;
+                groups.push(group);
+                nconf.set('db:groups', groups);
+                exports.saveToDisk(5);
+                res.json(group);
+
+                return;
+            default:
+                res.send(400);
+                return;
+        }
+        exports.saveToDisk(5);
+        res.send(200);
+    } else {
+        console.log(req.body);
+        res.send(400);
+    }
+
+};
+
 /*
  *   Local / Exports
  *

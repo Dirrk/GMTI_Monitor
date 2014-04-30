@@ -100,3 +100,8 @@
   color: white;
   font-weight: bold;
 }
+#timeArea {
+  display: inline;
+  float: right;
+  top: 5px;
+}

@@ -84,7 +84,7 @@ block append content
                         #createGroup
                             label Create: &nbsp
                             input(ng-model="$parent.createGroup")
-                            button(ng-click="$parent.addGroup") add
+                            button(ng-click="$parent.addGroup()") add
                         #groupTable
                             table.table
                                 thead
@@ -96,9 +96,11 @@ block append content
                                         td
                                             input(type="text", value="{{group.id}}", readonly)
                                         td
-                                            input(type="text", value="{{group.name}}")
+                                            input(type="text", value="{{group.name}}", ng-model="group.name")
                                         td
-                                            button(ng-click="$parent.saveGroup") Save
+                                            .spaceout
+                                                button(ng-click="$parent.delGroup($index)") Delete
+                                                button(ng-click="$parent.saveGroup($index)") Save
 
 
                 tab(heading="Dashboards")

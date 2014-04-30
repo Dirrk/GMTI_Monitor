@@ -17,6 +17,7 @@ manageApp.controller('manageCntrl', ['$scope', '$http',
        $scope.searchText = '';
        $scope.serverCreateName = undefined;
        $scope.serverEditGroup = undefined;
+       $scope.createGroup = undefined;
 
 
        $scope.serverTasks = [
@@ -102,6 +103,45 @@ manageApp.controller('manageCntrl', ['$scope', '$http',
        };
        $scope.runTask = function () {
            $scope.taskSelected.task();
+       };
+
+       $scope.addGroup = function() {
+
+           var text = $scope.createGroup;
+           if (text.length > 0)
+           {
+               $http.post('/manage/group', { command: 'CREATE', group: { id: -1, name: text } }).success(function (data) {
+                   if (data && data.id != undefined)
+                   {
+                       console.log(data);
+                        $scope.groups.push(data);
+                   } else {
+                       console.log(data);
+                   }
+               });
+           }
+
+       };
+
+       $scope.delGroup = function(id) {
+
+           if (id >= 0)
+           {
+               $http.post('/manage/group', { command: 'DELETE', group: { id: $scope.groups[id].id } }).success(function (data) {
+                    $scope.groups.splice(id, 1);
+               });
+           }
+
+       };
+       $scope.saveGroup = function(id) {
+
+           if (id >= 0)
+           {
+               $http.post('/manage/group', { command: 'UPDATE', group: { id: $scope.groups[id].id, name: $scope.groups[id].name } }).success(function (data) {
+                   console.log("Group saved");
+               });
+           }
+
        };
 
        function cleanData(data) {
