@@ -57,7 +57,7 @@ else {
         nconf.add('data', {type: 'file', file: './public/data/data.json', loadSync: true });
         nconf.add('db', {type: 'file', file: './public/data/servers.json', loadSync: true });
         nconf.use('data').set('lock', false);
-        api.saveToDisk();
+        console.log(nconf.get("db"));
 
         // Bind express and begin setting up the environment
         var app = express();
@@ -95,12 +95,14 @@ else {
         app.get('/servers', api.servers); // called to get list of servers
         app.get('/dashboards', api.dashboards);
         app.get('/save', api.save); // called to initiate a save
+        app.get('/reload', api.reload); // called to initiate a save
 
         app.post('/manage', checkAuth, api.manage); // save manage stuff
         app.post('/servers/create', checkAuth, api.createServer); // create server (maybe put this back into manage)
 
         app.post('/manage/server', checkAuth, api.manageServer); // manage server
         app.post('/manage/group', checkAuth, api.manageGroup); // manage server
+        app.post('/manage/dash', checkAuth, api.manageDash); // manage server
 
         //      * catch everything else
         app.get('/*', dashboard.indexed);

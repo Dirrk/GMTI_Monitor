@@ -110,21 +110,21 @@ block append content
 
                             .dashboard-container
                                 label ID:
-                                input(id="createDashID", placeholder="example_no_spaces")
+                                input(ng-model="$parent.createDashID", placeholder="example_no_spaces")
                                 label Front:
-                                select(id="createdashFront")
+                                select(ng-model="$parent.createDashFront")
                                     option(value="1") MOC
                                     option(value="2") PHX
                                 label Name:
-                                input(id="dashName-create", placeholder="Example abcd!")
+                                input(ng-model="$parent.createDashName", placeholder="Example abcd!")
                                 label Groups
-                                input(id="dashGroups-create", placeholder="Need to set this up properly")
+                                input(ng-model="$parent.createDashGroup", placeholder="Need to set this up properly")
                                 br
                                 label Description:
                                 br
-                                textarea(id="dashDesc-create", placeholder="Keep it short and simple")
+                                textarea(ng-model="$parent.createDashDesc", placeholder="Keep it short and simple")
                                 .saveArea
-                                    button(id="dashDesc-create") Create
+                                    button(ng-click="$parent.createDash()") Create
 
 
                         #listDashboards

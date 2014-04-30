@@ -290,6 +290,16 @@
           0,
           1
         ]
+      },
+      {
+        "id": "moc_usat_ux",
+        "front": 1,
+        "name": "USAT UX",
+        "description": "nginx/uWSGI USAT frontend servers grouped by release configuration.",
+        "groups": [
+          3,
+          4
+        ]
       }
     ],
     "fronts": [

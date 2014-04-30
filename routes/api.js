@@ -143,8 +143,9 @@ exports.save = function(req, res) {
 exports.reload = function(req, res) {
 
     res.send(200);
-    exports.saveToDisk(5);
-    nconf.use('db').reload();
+    nconf.use('db').load(function () {
+        exports.saveToDisk(5);
+    });
 
 };
 
@@ -366,8 +367,74 @@ exports.manageGroup = function (req, res) {
         console.log(req.body);
         res.send(400);
     }
+};
+
+exports.manageDash = function (req, res) {
+
+    var dashboards = nconf.get('db:dashboards');
+    if (req.body.command && req.body.dashboard) {
+
+        var dash = req.body.dashboard;
+        console.log(req.body);
+
+        switch (req.body.command) {
+
+            case 'UPDATE':
+
+                for (var i = 0; i < dashboards.length; i++) {
+
+                    if (dash.id === dashboards[i].id) {
+                        dashboards[i].front = dash.front;
+                        dashboards[i].name = dash.name;
+                        dashboards[i].description = dash.description;
+                        dashboards[i].groups = dash.groups;
+                    }
+                }
+                console.log(dash);
+                nconf.set('db:dashboards', dashboards);
+                break;
+
+            case 'DELETE':
+                /*
+                console.log("Deleting");
+                var found = groups.length;
+                for (var i = 0; i < groups.length; i++) {
+
+                    if (group.id === groups[i].id) {
+                        found = i;
+                    }
+                }
+                if (found < groups.length) {
+                    console.log("Deleting 1");
+                    groups.splice(found, 1);
+                }
+                nconf.set('db:groups', groups);
+                */
+                break;
+
+            case 'CREATE':
+
+                dashboards.push(dash);
+                nconf.set('db:dashboards', dashboards);
+                exports.saveToDisk(5);
+                res.json(dashboards);
+
+                return;
+            default:
+                res.send(400);
+                return;
+        }
+        exports.saveToDisk(5);
+        res.send(200);
+    } else {
+        console.log(req.body);
+        res.send(400);
+    }
 
 };
+
+
+
 
 /*
  *   Local / Exports
