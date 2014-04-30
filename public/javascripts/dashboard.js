@@ -7,6 +7,8 @@ $(document.body).ready(function() {
     var dashboardId = $("#hiddenField").data('did');
     console.log("Document Ready");
     safeHandler(dashboardId);
+
+    $(".currentTime").text(new Date().toLocaleString());
 });
 
 // angular
@@ -101,6 +103,7 @@ function safeHandler(dataId) {
                 loadGaugesUI(currentDataPoints);
                 loadSortUI(currentDataPoints);
                 loadGroupsAverageTimeGraph(currentDataPoints, currentGroups);
+                $(".currentTime").text(new Date().toLocaleString());
                 console.log("End: " + new Date().getTime());
             }
         });
