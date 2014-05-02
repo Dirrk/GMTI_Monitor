@@ -1,3 +1,8 @@
+@notification-info: #339bb9;
+@notification-warn: #eedc94;
+@notification-fail: #c43c35;
+@notification-pass: #57a957;
+
 .innerTab {
   padding: 1em;
 }
@@ -86,4 +91,64 @@
 .clickable
 {
   cursor: pointer;
+}
+#notificationArea
+{
+    color: black;
+    margin: 5em auto 5px auto;
+    width: 502px;
+    z-index: 500;
+    position: fixed;
+    top: 0;
+    left: 50%;
+    margin-left: -250px;
+    height: 52px;
+    display: none;
+    border-radius: 5px;
+    border: solid 1px;
+
+}
+
+#notificationText
+{
+  padding: 12px;
+  font-size: medium;
+  font-weight: 600;
+  float: left;
+  max-width: 450px;
+  width: 450px;
+}
+#notificationExit
+{
+  float: right;
+  width: 50px;
+  height: 50px;
+  padding: 10px 15px 10px 10px;
+}
+
+#notificationExit p
+{
+  font-size: x-large;
+  font-family: monospace;
+  text-align: center;
+  margin: 0px;
+  color: #404040;
+  opacity: 0.65;
+}
+
+.info
+{
+  background-color: @notification-info;
+}
+.warn
+{
+  background-color: @notification-warn;
+}
+.fail
+{
+  background-color: @notification-fail;
+}
+.pass
+{
+  background-color: @notification-pass;
 }

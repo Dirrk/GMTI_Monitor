@@ -17,11 +17,11 @@ block append header
 block append content
 
     #manage(ng-app="manageApp", ng-controller="manageCntrl")
+
         #tabs
             tabset
                 tab(heading="Servers")
                     #servers.innerTab
-
                         #topArea
                             #filterArea
                                 label Search:&nbsp
@@ -147,6 +147,12 @@ block append content
                                         textarea(id="dashDesc-{{dashboard.id}}", value="{{dashboard.description}}")
                                         .saveArea
                                             button(id="dashDesc-{{dashboard.id}}") Save
+        #notificationArea
+            p#notificationText
+            #notificationExit
+                p x
+
+
 
 
 block append scripts

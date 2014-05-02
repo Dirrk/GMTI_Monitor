@@ -282,3 +282,27 @@ function showModal(modalId) {
         $(modalId).css('opacity', 0);
     });
 }
+
+$(document.body).ready(function () {
+
+    $("#notificationExit").click(function() {
+        $("#notificationArea").hide();
+    });
+
+});
+
+function showNotification(msg, level) {
+
+    $("#notificationArea").removeClass('info fail pass warn');
+    if (!level) {
+        var level = 'info';
+    }
+    $("#notificationText").text(msg);
+    $("#notificationArea").addClass(level);
+    $("#notificationArea").show();
+    setTimeout(function() {
+        $("#notificationArea").hide();
+    }, 3000);
+}
+
+
