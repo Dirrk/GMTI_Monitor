@@ -2,6 +2,7 @@
 @notification-warn: #eedc94;
 @notification-fail: #c43c35;
 @notification-pass: #57a957;
+@odd: #EFEFEF;
 
 .innerTab {
   padding: 1em;
@@ -25,22 +26,6 @@
 
 #groupTable {
   width: 50%;
-}
-
-.dashboard-container textarea
-{
-  width: 90%;
-  margin-left: 1em;
-}
-.dashboard-container
-{
-  margin-left: auto;
-  margin-right: auto;
-  width: 60%;
-}
-.dashboard-container label
-{
-  padding: 1em;
 }
 
 .saveArea
@@ -151,4 +136,68 @@
 .pass
 {
   background-color: @notification-pass;
+}
+
+#createDashboard {
+  position: relative;
+}
+.dashboard-split {
+  position: relative;
+  top: 0;
+  display: inline-block;
+}
+
+.dashboard-split-left {
+  width: 400px;
+  display: inline-table;
+  height: 310px;
+  margin: 25px;
+}
+.dashboard-split-right {
+  width: 400px;
+  display: inline-table;
+  height: 310px;
+  margin: 25px;
+}
+
+.dashboard-under
+{
+  margin-top: -2em;
+  width: 800px;
+  margin-left: 12px;
+}
+#groupSelectionArea table
+{
+  width: 100%;
+}
+#groupSelectionArea td:first-child
+{
+  width: 80%;
+}
+#groupSelectionArea td:last-child
+{
+  width: 20%;
+}
+
+.odd
+{
+  background-color: @odd;
+}
+
+#groupSelectionArea
+{
+  overflow-y: scroll;
+  max-height: 270px;
+}
+
+#createDashboard
+{
+  width: 900px;
+}
+#createDash
+{
+  position: relative;
+  bottom: 6em;
+  left: 805px;
+
 }

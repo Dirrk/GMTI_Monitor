@@ -105,26 +105,34 @@ block append content
 
                 tab(heading="Dashboards")
                     #dashboards.innerTab
-
-                        #createDashBoard
-
-                            .dashboard-container
-                                label ID:
-                                input(ng-model="$parent.createDashID", placeholder="example_no_spaces")
-                                label Front:
-                                select(ng-model="$parent.createDashFront")
-                                    option(value="1") MOC
-                                    option(value="2") PHX
-                                label Name:
-                                input(ng-model="$parent.createDashName", placeholder="Example abcd!")
-                                label Groups
-                                input(ng-model="$parent.createDashGroup", placeholder="Need to set this up properly")
-                                br
-                                label Description:
-                                br
-                                textarea(ng-model="$parent.createDashDesc", placeholder="Keep it short and simple")
-                                .saveArea
-                                    button(ng-click="$parent.createDash()") Create
+                        #createDashboard
+                            .dashboard-split
+                                .dashboard-split-left
+                                    .stackedForm
+                                        label ID:
+                                        input(ng-model="$parent.createDashID", placeholder="id_has_no_spaces")
+                                    .stackedForm
+                                        label Front:
+                                        select(ng-model="$parent.createDashFront")
+                                            option(value="1") MOC
+                                            option(value="2") PHX
+                                    .stackedForm
+                                        label Name:
+                                        input(ng-model="$parent.createDashName", placeholder="Name")
+                                .dashboard-split-right
+                                    .stackedForm
+                                        label Groups
+                                        #groupSelectionArea
+                                            table
+                                                tr(ng-repeat="group in groups", ng-class-odd="'odd'")
+                                                    td {{group.name}}
+                                                    td
+                                                        input(type="checkbox")
+                            .dashboard-under
+                                .stackedForm
+                                    label Description:
+                                    textarea(ng-model="$parent.createDashDesc", placeholder="Description")
+                            button#createDash(ng-click="$parent.createDash()") Create
 
 
                         #listDashboards
