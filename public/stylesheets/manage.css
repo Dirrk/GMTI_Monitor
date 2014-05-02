@@ -63,3 +63,6 @@
 #serverMassGroupChangeButtons {
   float: right;
 }
+.clickable {
+  cursor: pointer;
+}

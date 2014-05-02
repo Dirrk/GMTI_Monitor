@@ -18,6 +18,8 @@ manageApp.controller('manageCntrl', ['$scope', '$http',
        $scope.serverCreateName = undefined;
        $scope.serverEditGroup = undefined;
        $scope.createGroup = undefined;
+       $scope.sortServers = 'group';
+       $scope.reverse = false;
 
 
        $scope.serverTasks = [
