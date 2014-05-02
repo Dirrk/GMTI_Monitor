@@ -127,7 +127,7 @@ block append content
                                                 tr(ng-repeat="group in groups", ng-class-odd="'odd'")
                                                     td {{group.name}}
                                                     td
-                                                        input(type="checkbox")
+                                                        input(type="checkbox", id="DashCreate-selectedGroup-{{$index}}")
                             .dashboard-under
                                 .stackedForm
                                     label Description:
@@ -138,23 +138,36 @@ block append content
                         #listDashboards
                             accordion(close-others="false")
                                 accordion-group(ng-repeat="dashboard in dashboards", heading="{{dashboard.id}} :: {{dashboard.name}} :: {{dashboard.description}}")
-                                    .dashboard-container
-                                        label ID:
-                                        input(id="dashID-{{dashboard.id}}", value="{{dashboard.id}}")
-                                        label Front:
-                                        select(id="dashFront-{{dashboard.id}}")
-                                            option(value="1") MOC
-                                            option(value="2") PHX
-                                        label Name:
-                                        input(id="dashName-{{dashboard.id}}", value="{{dashboard.name}}")
-                                        label Groups
-                                        input(id="dashGroups-{{dashboard.id}}", value="{{dashboard.groups}}")
-                                        br
-                                        label Description:
-                                        br
-                                        textarea(id="dashDesc-{{dashboard.id}}", value="{{dashboard.description}}")
-                                        .saveArea
-                                            button(id="dashDesc-{{dashboard.id}}") Save
+                                    .editDashboard
+                                        .dashboard-split
+                                            .dashboard-split-left-1
+                                                .stackedForm
+                                                    label ID:
+                                                    input(ng-model="dashboard.id", readonly)
+                                                .stackedForm
+                                                    label Front:
+                                                    select(ng-model="dashboard.front")
+                                                        option(value="1") MOC
+                                                        option(value="2") PHX
+                                                .stackedForm
+                                                    label Name:
+                                                    input(ng-model="dashboard.name")
+                                            .dashboard-split-right-1
+                                                .stackedForm
+                                                    label Groups
+                                                    #groupSelectionArea
+                                                        table
+                                                            tr(ng-repeat="group in groups", ng-class-odd="'odd'")
+                                                                td {{group.name}}
+                                                                td
+                                                                    input(type="checkbox", id="Dash-{{$parent.$index}}-selectedGroup-{{$index}}")
+                                        .dashboard-under-1
+                                            .stackedForm
+                                                label Description:
+                                                textarea(ng-model="dashboard.description", placeholder="Description")
+                                        .spaceout
+                                            button.saveDash(ng-click="$parent.delDash($index)") Delete
+                                            button.saveDash(ng-click="$parent.saveDash($index)") Save
         #notificationArea
             p#notificationText
             #notificationExit

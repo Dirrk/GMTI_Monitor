@@ -21,6 +21,8 @@ manageApp.controller('manageCntrl', ['$scope', '$http',
        $scope.sortServers = 'group';
        $scope.reverse = false;
 
+       $scope.allDataReady = 0;
+
 
        $scope.serverTasks = [
            { name: "Select all", task: function () { selectAll(true) } },
@@ -35,16 +37,19 @@ manageApp.controller('manageCntrl', ['$scope', '$http',
 
        $http.get('/groups', {cache: false}).success(function(data) {
            $scope.groups = data;
+           $scope.allDataReady++;
        });
        getServers();
        function getServers() {
            $http.get('/servers', {cache: false}).success(function (data) {
                $scope.servers = cleanData(data);
+               $scope.allDataReady++;
             }
            );
        }
        $http.get('/dashboards', {cache: false}).success(function(data) {
            $scope.dashboards = data;
+           $scope.allDataReady++;
        });
 
        $scope.addServer = function () {
@@ -235,6 +240,137 @@ manageApp.controller('manageCntrl', ['$scope', '$http',
                }
            }
        }
+       function checkData() {
+           if ($scope.allDataReady > 2)
+           {
+               fixDashboards();
+
+           } else {
+               setTimeout(function () { checkData(); }, 500);
+           }
+       }
+       checkData();
+       function fixDashboards() {
+           console.log("Fix dashboards");
+
+           // Dash-{{$parent.$index}}-selectedGroup-{{$index}}
+
+           for (var i = 0; i < $scope.dashboards.length; i++)
+           {
+
+               for (var j = 0; j < $scope.groups.length; j++)
+               {
+
+                   for (var k = 0; k < $scope.dashboards[i].groups.length; k++)
+                   {
+
+                       if ($scope.dashboards[i].groups[k] == $scope.groups[j].id) {
+
+                           $("#Dash-" + i + "-selectedGroup-" + j).prop('checked', true);
+                           k = $scope.dashboards[i].groups.length;
+                           console.log("#Dash-" + i + "-selectedGroup-" + j);
+
+                       } else {
+                           console.log("Dashboards: " + i + " group " + k + " does not match " + $scope.groups[j].id);
+                       }
+                   }
+               }
+           }
+
+       };
+
+       // DashCreate-selectedGroup-{{$index}}
+       // .createDash()
+       $scope.createDash = function () {
+
+           var id = $scope.createDashID;
+           var front = $scope.createDashFront;
+           var name = $scope.createDashName;
+           var desc = $scope.createDashDesc;
+           var groups = [];
+           for (var i = 0; i < $scope.groups.length; i++)
+           {
+
+               if ($("#DashCreate-selectedGroup-" + i).prop('checked') == true)
+               {
+                   groups.push($scope.groups[i].id);
+               }
+           }
+           var command = "CREATE";
+
+           var sendData = {
+
+               id: id,
+               front: front,
+               name: name,
+               description: desc,
+               groups: groups
+           };
+
+           performDashAction(command, sendData, function (data) {
+
+               $scope.dashboards.push(sendData);
+               fixDashboards();
+
+           });
+
+       };
+
+       $scope.saveDash = function (index) {
+
+           var data = $scope.dashboards[index];
+           
+           var command = "UPDATE";
+
+           data.groups = [];
+
+           for (var i = 0; i < $scope.groups.length; i++)
+           {
+
+               if ($("#Dash-" + index + "-selectedGroup-" + i).prop('checked') == true)
+               {
+                   data.groups.push($scope.groups[i].id);
+               }
+           }
+
+
+           performDashAction(command, data, function () {
+               $scope.dashboards[index] = data;
+               fixDashboards();
+           });
+       };
+
+       $scope.delDash = function (index) {
+
+           console.log($scope.dashboards[index]);
+           var command = "DELETE";
+           performDashAction(command, $scope.dashboards[index], function () {
+               $scope.dashboards.splice(index, 1);
+           });
+
+       };
+
+
+       function performDashAction(type, data, callback)
+       {
+           $http.post('/manage/dash', { command: type, dashboard: data }).success(function (data) {
+
+               if (typeof callback === 'function') {
+                   callback(null, data);
+               } else {
+                   console.log("success");
+               }
+               checkData();
+
+           }).error(function (data) {
+               if (typeof callback === 'function') {
+                   callback(data);
+               } else {
+                   console.log("success");
+               }
+           });
+       }
+
 
        $scope.serverEditMassGroup = function () {
 

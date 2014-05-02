@@ -350,7 +350,12 @@ exports.manageGroup = function (req, res) {
                 break;
             case 'CREATE':
 
-                group.id = groups[groups.length - 1].id + 1;
+                try {
+                    group.id = groups[groups.length - 1].id + 1;
+
+                } catch (e) {
+                    group.id = 0;
+                }
                 groups.push(group);
                 nconf.set('db:groups', groups);
                 exports.saveToDisk(5);
@@ -395,21 +400,21 @@ exports.manageDash = function (req, res) {
                 break;
 
             case 'DELETE':
-                /*
-                console.log("Deleting");
-                var found = groups.length;
-                for (var i = 0; i < groups.length; i++) {
 
-                    if (group.id === groups[i].id) {
+                console.log("Deleting Dashboard");
+                var found = dashboards.length;
+                for (var i = 0; i < dashboards.length; i++) {
+
+                    if (dash.id === dashboards[i].id) {
                         found = i;
                     }
                 }
-                if (found < groups.length) {
+                if (found < dashboards.length) {
                     console.log("Deleting 1");
-                    groups.splice(found, 1);
+                    dashboards.splice(found, 1);
                 }
-                nconf.set('db:groups', groups);
-                */
+                nconf.set('db:dashboards', dashboards);
+
                 break;
 
             case 'CREATE':
