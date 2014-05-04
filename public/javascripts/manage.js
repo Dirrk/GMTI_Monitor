@@ -80,37 +80,51 @@ manageApp.controller('manageCntrl', ['$scope', '$http',
 
        $scope.saveServer = function(id) {
 
-           var server = $scope.servers[id];
+           var sid = getServerIdByName(id);
 
-           if (isNaN(server.group) === true || typeof server.group == typeof {}) {
-               server.group = server.group.id;
+           if (sid >= 0 && sid < $scope.servers.length)
+           {
+               var server = $scope.servers[sid];
+
+               if (isNaN(server.group) === true || typeof server.group == typeof {}) {
+                   server.group = server.group.id;
+               }
+               var data = [server];
+
+               console.log("ID: " + sid);
+               console.log("Server:" + JSON.stringify($scope.servers[sid]));
+
+               performServerAction('UPDATE', data);
            }
-           var data = [server];
 
-           console.log("ID: " + id);
-           console.log("Server:" + JSON.stringify($scope.servers[id]));
 
-           performServerAction('UPDATE', data);
 
        };
        $scope.delServer = function(id) {
 
-           var server = $scope.servers[id];
+           var sid = getServerIdByName(id);
 
-           var data = [server];
+           if (sid >= 0 && sid < $scope.servers.length) {
 
-           console.log("ID: " + id);
-           console.log("Server:" + JSON.stringify($scope.servers[id]));
+               var server = $scope.servers[sid];
 
-           performServerAction('DELETE', data, function () {
-               console.log("Deleted server");
-               $scope.servers.splice(id, 1);
-           });
+               var data = [server];
+
+               console.log("ID: " + sid);
+               console.log("Server:" + JSON.stringify($scope.servers[sid]));
+
+               performServerAction('DELETE', data, function () {
+                   console.log("Deleted server");
+                   $scope.servers.splice(sid, 1);
+               }
+               );
+           }
 
        };
        $scope.runTask = function () {
            $scope.taskSelected.task();
        };
+
 
        $scope.addGroup = function() {
 
@@ -150,6 +164,16 @@ manageApp.controller('manageCntrl', ['$scope', '$http',
            }
 
        };
+       function getServerIdByName(name) {
+           for (var i = 0; i< $scope.servers.length; i++) {
+               if (name == $scope.servers[i].server) {
+                   console.log("Found: " + name + " at " + i);
+                   return i;
+               }
+           }
+           console.log("Couldn't find " + name);
+           return -1;
+       }
 
        function cleanData(data) {
            for(var i = 0; i < data.length; i++)

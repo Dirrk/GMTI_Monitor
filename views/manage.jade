@@ -49,8 +49,8 @@ block append content
                                     td
                                         .spaceout
                                             input(type="checkbox", ng-model="server.selected")
-                                            button(ng-click="delServer($index)") Delete
-                                            button(ng-click="saveServer($index)") Save
+                                            button(ng-click="delServer(server.server)") Delete
+                                            button(ng-click="saveServer(server.server)") Save
 
                         #serverModal.radamodal
                             .radamodalClose
