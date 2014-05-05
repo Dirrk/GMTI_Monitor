@@ -44,7 +44,7 @@ else {
         var routes = require('./routes');
         var dashboard = require('./routes/dashboard');
         var api = require('./routes/api');
-        var derek = require('./routes/derek');
+        // var derek = require('./routes/derek');
 
         // Required
         var http = require('http');
@@ -105,7 +105,7 @@ else {
         app.post('/manage/group', checkAuth, api.manageGroup); // manage server
         app.post('/manage/dash', checkAuth, api.manageDash); // manage server
 
-        app.get('/derek', derek.app);
+        // app.get('/derek', derek.app);
 
         //      * catch everything else
         app.get('/*', dashboard.indexed);
