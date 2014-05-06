@@ -26,7 +26,7 @@ if (cluster.isMaster)
 }
 /**
  *  Slave process
- *  Use strict function because I like clean code and do not want to contaminate this level
+ *
  */
 
 else {
@@ -112,7 +112,8 @@ else {
 
         http.createServer(app).listen(app.get('port'), function () {
             console.log('Express server listening on port ' + app.get('port'));
-            }
+                                          api.startCollector();
+                                      }
         );
 
         setInterval(function() {
@@ -124,4 +125,5 @@ else {
             next();
         }
     }
+
 }

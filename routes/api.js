@@ -11,7 +11,8 @@ var nconf = require('nconf');
 var numUpdates = 0;
 var debug = false;
 var util = require('util');
-
+var async = require('async');
+var http = require('http');
 
 /*  API Calls
 
@@ -19,19 +20,126 @@ var util = require('util');
  * Done *
  app.post('/api/update', api.update);  // Servers send data -- done
  app.get('/save', api.save); // called to initiate a save  -- done
-
- * Testing
  app.post('/api/data', api.data);  // called to get data about groups of servers
  app.get('/api/data/:id', api.getData); // called from built dashboards
-
- * Low Priority
  app.post('/api/groups', api.groups); // called to get list of groups
  app.post('/api/servers', api.servers); // called to get list of servers from db
-
- * Last *
  app.post('/manage', checkAuth, api.manage);  // saves changes to manage
 
  */
+
+/**
+ *
+ *  Version 2:
+ *
+ *  Instead of having the servers call /api/update we will now deploy gmti_server_responder onto each server that will listen on *:5000/ and respond with the data already in the correct format
+ *
+ *  This assumes we are using a data set of predetermined servers < Version 2 use servers.json but this version will be configured as a new instance that will use redis for data storage.
+ *
+ *  To prevent ddos'ing the servers or killing the host server I am going to use async mapLimit to queue up http requests 50 at a time and then measure the time it took to complete all requests and subtract that from 30 seconds and set time out to run again
+ *
+ *
+ */
+
+exports.startCollector = function startCollector(time) {
+
+
+    if (time && time > 0) {
+
+        var time = time;
+
+    } else if (time && time <= 0) {
+        var time = 1;
+    } else {
+        var time = 30000;
+    }
+
+    setTimeout(go, time);
+
+    function go() {
+
+        // get Values
+        var servers = nconf.get('db:servers');
+        var startTime = new Date().getTime();
+
+        async.mapLimit(servers, 50,
+                       function (item, next) {
+
+                           httpPerformRequest(item, function (data) {
+                               next(null, data);
+                           });
+
+                       }, function (err, results) {
+
+
+
+                for ( var i = 0; i < results.length; i++ ) {
+                    if (results[i] != 'empty') {
+                        var serverData = JSON.parse(results[i]);
+                        addServerData(serverData.server, serverData.cpu, serverData.mem, 0);
+                    }
+                }
+                var endTime = new Date().getTime();
+
+                startCollector(30000 - (endTime - startTime));
+
+                console.log(results);
+
+
+            }
+        );
+    };
+
+};
+
+
+function httpPerformRequest(server, cb) {
+
+    var options = {
+        method: 'GET',
+        host: server.server,
+        port: 5000,
+        path: '/'
+    };
+
+
+    var req = http.request(options, function(res) {
+        res.setEncoding('utf8');
+        var response = '';
+        req.on('socket', function(socket) {
+            socket.setTimeout(2500);
+            socket.on('timeout', function() {
+                req.abort();
+                cb('empty');
+            });
+        });
+        res.on('data', function (chunk) {
+            response += chunk;
+        });
+        res.on('end', function () {
+            cb(response);
+        });
+        res.on('error', function (err) {
+            req.abort();
+            util.error(err);
+            cb('empty');
+        });
+    });
+
+    req.on('error', function(err) {
+        console.log("Error trying to update " + server);
+        console.log(err);
+        cb('empty')
+    });
+    try {
+        req.end();
+    } catch (e) {
+        util.error(e);
+        cb('empty');
+    }
+
+}
+
 
 /**
  * /api/update receives data from servers
@@ -74,64 +182,65 @@ exports.update = function(req, res) {
         exports.saveToDisk(0);
     }
 
-    function addServerData(server, cpu, mem, count) {
+};
 
-        var data = nconf.use('data');
-        server = server.split('.')[0];
+function addServerData(server, cpu, mem, count) {
 
-        if (data.get('lock') === false || count >= 5)
+    var data = nconf.use('data');
+    server = server.split('.')[0];
+
+    if (data.get('lock') === false || count >= 5)
+    {
+        data.set('lock', true);
+        var servers = data.get('servers'),
+            iterator,
+            found;
+
+        for(iterator = 0, found = servers.length; iterator < servers.length; iterator++)
         {
-            data.set('lock', true);
-            var servers = data.get('servers'),
-                iterator,
-                found;
 
-            for(iterator = 0, found = servers.length; iterator < servers.length; iterator++)
+            if (servers[iterator].server.toUpperCase() == server.toUpperCase())
             {
-
-                if (servers[iterator].server == server)
-                {
-                    found = iterator;
-                }
+                found = iterator;
             }
-            if (found === servers.length)
-            {
-                servers.push(
-                    {
-                        server: server,
-                        group: lookUpGroup(server),
-                        data: []
-                    }
-                );
-            } else if (servers[found].group !== undefined || servers[found].group !== null || servers[found].group < 0) {
-
-                // new server will always have this old servers may not have this data because pre vrc1.3 did not have the group info in data.json
-                servers[found].group = lookUpGroup(server);
-
-            }
-            servers[found].data.push(
+        }
+        if (found === servers.length)
+        {
+            servers.push(
                 {
-                    time: new Date().getTime(),
-                    cpu: cpu || 0.00,
-                    mem: mem || 0.00
+                    server: server,
+                    group: lookUpGroup(server),
+                    data: []
                 }
             );
+        } else if (servers[found].group !== undefined || servers[found].group !== null || servers[found].group < 0) {
 
-            while (servers[found].data.length > 60)
-            {
-                servers[found].data.shift();
-            }
+            // new server will always have this old servers may not have this data because pre vrc1.3 did not have the group info in data.json
+            servers[found].group = lookUpGroup(server);
 
-            data.set('servers', servers);
-            data.set('lock', false);
-        } else {
-            count = count || 0;
-            count++;
-            setTimeout(function() {
-                addServerData(server, cpu, mem, count);
-            }, Math.floor(Math.random() * 100))
         }
-    };
+        servers[found].data.push(
+            {
+                time: new Date().getTime(),
+                cpu: cpu || 0.00,
+                mem: mem || 0.00
+            }
+        );
+
+        while (servers[found].data.length > 60)
+        {
+            servers[found].data.shift();
+        }
+
+        data.set('servers', servers);
+        data.set('lock', false);
+    } else {
+        count = count || 0;
+        count++;
+        setTimeout(function() {
+            addServerData(server, cpu, mem, count);
+        }, Math.floor(Math.random() * 100))
+    }
 };
 
 exports.save = function(req, res) {
