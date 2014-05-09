@@ -84,7 +84,7 @@ exports.report = function(req, res) {
     var output = {
         start: start.toTimeString(),
         end: end.toTimeString(),
-        data: reportData
+        data: sortServers(reportData)
     };
 
 
@@ -99,3 +99,18 @@ exports.report = function(req, res) {
 
 
 };
+
+function sortServers(servers) {
+
+    return servers.sort(function (a, b) { // sort before saving
+        if (a.server < b.server)
+        {
+            return -1;
+        } else if (a.server > b.server) {
+            return 1;
+        } else {
+            return 0;
+        }
+
+    });
+}
