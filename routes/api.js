@@ -127,7 +127,7 @@ function httpPerformRequest(server, cb) {
     });
 
     req.on('error', function(err) {
-        console.log("Error trying to update " + server);
+        console.log("Error trying to update " + server.server);
         console.log(err);
         cb('empty')
     });
