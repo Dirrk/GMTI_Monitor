@@ -56,8 +56,16 @@ else {
 
         // Load nconf files or fail
         nconf.add('data', {type: 'file', file: './public/data/data.json', loadSync: true });
-        nconf.add('db', {type: 'file', file: './public/data/servers.json', loadSync: true });
         nconf.use('data').set('lock', false);
+        var archive = nconf.use('data').get('db:archive');
+
+
+        if (archive == null || archive == undefined || archive.length == null || archive.length == undefined || archive.length === 0) {
+            nconf.use('data').set('db:archive', []);
+            console.log("Created archive");
+            api.saveToDisk(0);
+        }
+
         console.log(nconf.get("db"));
 
         // Bind express and begin setting up the environment

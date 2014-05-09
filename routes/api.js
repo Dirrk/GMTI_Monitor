@@ -245,16 +245,15 @@ function addServerData(server, cpu, mem, count) {
 
 exports.save = function(req, res) {
     res.send(200);
-    nconf.use('db').save();
     exports.saveToDisk(5);
 };
 
 exports.reload = function(req, res) {
 
     res.send(200);
-    nconf.use('db').load(function () {
-        exports.saveToDisk(5);
-    });
+
+    exports.saveToDisk(5);
+
 
 };
 
@@ -579,17 +578,13 @@ exports.saveToDisk = function saveToDisk (count) {
 
         cleanUpData();
 
-        nconf.use('db').save(function(err) { // save db first
+        nconf.use('data').save(function(err) { // then data
             if (err) {
                 console.log(err);
             }
-            nconf.use('data').save(function(err) { // then data
-               if (err) {
-                   console.log(err);
-               }
-               data.set('lock', false);
-            });
+            data.set('lock', false);
         });
+
 
     } else {
         setTimeout(function() {
@@ -614,9 +609,9 @@ exports.saveToDisk = function saveToDisk (count) {
             {
                 if (temp.length > 0)
                 {
-                    if (temp[0].time <= (new Date().getTime() - 3600000))
+                    if (temp[0].time <= (new Date().getTime() - 360000))
                     {
-                        servers[i].data.shift();
+                         archiveData(servers[i].server, servers[i].data.shift());
                         // temp.shift();
                     } else {
                         done = true;
@@ -652,6 +647,37 @@ exports.saveToDisk = function saveToDisk (count) {
         data.set('servers', servers2);
     };
 
+};
+
+
+function archiveData(server, data) {
+
+    return;
+
+    var db = nconf.use('data');
+
+    var archiveServers = db.get('db:archive');
+    var found = -1;
+    for (var i = 0; i < archiveServers.length; i++)
+    {
+
+        if (archiveServers.server == server) {
+
+            found = i;
+        }
+    }
+    if (found === -1)
+    {
+        var temp = {
+
+            server: server,
+            data: []
+        };
+        temp.data.push(data);
+        archiveServers.push(temp);
+    } else {
+        archiveServers.data.push(data);
+    }
 };
 
 
@@ -711,8 +737,7 @@ function sortServers(servers) {
 
 function parseGroups(inputGroups) {
 
-    var db = nconf.use('db');
-    var groups = db.get('db:groups');
+    var groups = nconf.get('db:groups');
     var ret = [];
 
     for (var i = 0; i < groups.length; i++)
