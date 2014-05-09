@@ -63,6 +63,20 @@ else {
         if (archive == null || archive == undefined || archive.length == null || archive.length == undefined || archive.length === 0) {
             nconf.use('data').set('db:archive', []);
             console.log("Created archive");
+
+        }
+        var fronts = nconf.use('data').get('fronts');
+        if (fronts == null || fronts == undefined || fronts.length == null || fronts.length == undefined || fronts.length === 0) {
+            nconf.use('data').set('fronts', [{
+                "id": 1,
+                "url": "/moc",
+                "name": "MOC"
+            },
+            {
+                "id": 2,
+                "url": "/phx",
+                "name": "PHX"
+            }]);
             api.saveToDisk(0);
         }
 

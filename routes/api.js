@@ -652,11 +652,11 @@ exports.saveToDisk = function saveToDisk (count) {
 
 function archiveData(server, data) {
 
-    return;
 
     var db = nconf.use('data');
 
     var archiveServers = db.get('db:archive');
+
     var found = -1;
     for (var i = 0; i < archiveServers.length; i++)
     {
@@ -676,7 +676,7 @@ function archiveData(server, data) {
         temp.data.push(data);
         archiveServers.push(temp);
     } else {
-        archiveServers.data.push(data);
+        archiveServers[found].data.push(data);
     }
 };
 
