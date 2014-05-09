@@ -569,7 +569,7 @@ exports.saveToDisk = function saveToDisk (count) {
 
     if (data.get('lock') === false || count >= 5)
     {
-        if (count >= 5)
+        if (count == 5)
         {
             console.log("Force Saving data to disk " + (new Date).toLocaleString());
         }

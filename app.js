@@ -44,6 +44,7 @@ else {
         var routes = require('./routes');
         var dashboard = require('./routes/dashboard');
         var api = require('./routes/api');
+        var report = require('./routes/report');
         // var derek = require('./routes/derek');
 
         // Required
@@ -57,7 +58,7 @@ else {
         // Load nconf files or fail
         nconf.add('data', {type: 'file', file: './public/data/data.json', loadSync: true });
         nconf.use('data').set('lock', false);
-        var archive = nconf.use('data').set('db:archive');
+        var archive = nconf.use('data').get('db:archive');
 
         // nconf.use('data').set('db:archive', []);
         if (archive == null || archive == undefined || archive.length == null || archive.length == undefined || archive.length === 0) {
@@ -132,6 +133,7 @@ else {
         app.get('/archive', api.getArchive);
 
 
+        app.get('/report', report.report);
 
         //      * catch everything else
         app.get('/*', dashboard.indexed);
@@ -143,7 +145,7 @@ else {
         );
 
         setInterval(function() {
-            api.saveToDisk(0);
+            api.saveToDisk(6);
         }, 120000);
 
         function checkAuth(req, res, next) {

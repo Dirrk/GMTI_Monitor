@@ -1,0 +1,30 @@
+//
+   Created by Dirrk on 5/9/2014.
+
+table
+    tr
+        td Start:
+        td #{start}
+    tr
+        td End
+        td #{end}
+
+
+table(stye="width: 75%")
+    thead
+        td Server
+        td Average CPU
+        td Average Mem
+        td High CPU
+        td Low CPU
+        td High Mem
+        td Low Mem
+    each serv in data
+        tr
+            td #{serv.server}
+            td #{serv.averageCPU}
+            td #{serv.averageMem}
+            td #{serv.highCPU}
+            td #{serv.lowCPU}
+            td #{serv.highMem}
+            td #{serv.lowMem}
