@@ -21,7 +21,7 @@ exports.report = function(req, res) {
     var numEnd = end.getTime();
 
     var reportData = [];
-    var servers = nconf.use('data').get('db:archive');
+    var servers = combinedServers();
     for (var i = 0; i < servers.length; i++) {
 
         reportData.push({
@@ -113,4 +113,34 @@ function sortServers(servers) {
         }
 
     });
+}
+
+function combinedServers() {
+
+    var archived = nconf.use('data').get('db:archive');
+    var current = nconf.use('data').get('servers');
+    var combined = [];
+
+    var addlater = [];
+
+    if (current.length >= archived.length) {
+        combined = current;
+    } else {
+        combined = archived;
+    }
+    for (var i = 0; i < combined.length; i++)
+    {
+        var found = -1;
+        for (var j = 0; j < current.length; j++)
+        {
+
+            if (current[j].server == combined[i].server) {
+                found = i;
+                // combine here based on which one needs to be first ie current.data should always be first
+            }
+        }
+        addlater.push(i);
+    }
+
+
 }
