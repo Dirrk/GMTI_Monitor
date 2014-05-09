@@ -1,31 +1,30 @@
 //
    Created by Dirrk on 5/9/2014.
-link(rel='stylesheet', href='/stylesheets/report.css')
 
 table
     tr
-        td Start:
-        td #{start}
+        td(stye="width: 14%") Start:
+        td(stye="width: 14%") #{start}
     tr
-        td End
-        td #{end}
+        td(stye="width: 14%") End
+        td(stye="width: 14%") #{end}
 
 
 table(stye="width: 100%")
     thead
-        td Server
-        td Average CPU
-        td Average Mem
-        td High CPU
-        td Low CPU
-        td High Mem
-        td Low Mem
+        td(stye="width: 14%") Server
+        td(stye="width: 14%") Average CPU
+        td(stye="width: 14%") Average Mem
+        td(stye="width: 14%") High CPU
+        td(stye="width: 14%") Low CPU
+        td(stye="width: 14%") High Mem
+        td(stye="width: 14%") Low Mem
     each serv,i in data
-        tr(class=(i%2 == 0) ? 'odd' : 'even')
-            td #{serv.server}
-            td #{serv.averageCPU}
-            td #{serv.averageMem}
-            td #{serv.highCPU}
-            td #{serv.lowCPU}
-            td #{serv.highMem}
-            td #{serv.lowMem}
+        tr(style=(i%2 == 0) ? 'background-color: lightgrey' : 'background-color: white')
+            td(stye="width: 14%") #{serv.server}
+            td(stye="width: 14%") #{serv.averageCPU}
+            td(stye="width: 14%") #{serv.averageMem}
+            td(stye="width: 14%") #{serv.highCPU}
+            td(stye="width: 14%") #{serv.lowCPU}
+            td(stye="width: 14%") #{serv.highMem}
+            td(stye="width: 14%") #{serv.lowMem}

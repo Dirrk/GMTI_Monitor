@@ -82,8 +82,8 @@ exports.report = function(req, res) {
     // res.write('Start: ' + start.toTimeString());
     // res.write('End: ' + end.toTimeString());
     var output = {
-        start: start.toTimeString(),
-        end: end.toTimeString(),
+        start: start.toDateString() + " " + start.toTimeString(),
+        end: end.toDateString() + " " + end.toTimeString(),
         data: sortServers(reportData)
     };
 
