@@ -57,17 +57,17 @@ else {
         // Load nconf files or fail
         nconf.add('data', {type: 'file', file: './public/data/data.json', loadSync: true });
         nconf.use('data').set('lock', false);
-        var archive = nconf.use('data').get('db:archive');
+        var archive = nconf.use('data').set('db:archive');
 
-
+        // nconf.use('data').set('db:archive', []);
         if (archive == null || archive == undefined || archive.length == null || archive.length == undefined || archive.length === 0) {
             nconf.use('data').set('db:archive', []);
             console.log("Created archive");
 
         }
-        var fronts = nconf.use('data').get('fronts');
+        var fronts = nconf.use('data').get('db:fronts');
         if (fronts == null || fronts == undefined || fronts.length == null || fronts.length == undefined || fronts.length === 0) {
-            nconf.use('data').set('fronts', [{
+            nconf.use('data').set('db:fronts', [{
                 "id": 1,
                 "url": "/moc",
                 "name": "MOC"
@@ -128,6 +128,10 @@ else {
         app.post('/manage/dash', checkAuth, api.manageDash); // manage server
 
         // app.get('/derek', derek.app);
+
+        app.get('/archive', api.getArchive);
+
+
 
         //      * catch everything else
         app.get('/*', dashboard.indexed);

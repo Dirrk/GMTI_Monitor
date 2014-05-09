@@ -647,6 +647,15 @@ exports.saveToDisk = function saveToDisk (count) {
         data.set('servers', servers2);
     };
 
+
+};
+
+exports.getArchive = function (req, res) {
+
+
+    var db = nconf.get('db:archive');
+    res.json(db);
+
 };
 
 
@@ -661,7 +670,7 @@ function archiveData(server, data) {
     for (var i = 0; i < archiveServers.length; i++)
     {
 
-        if (archiveServers.server == server) {
+        if (archiveServers[i].server.toLowerCase() == server.toLowerCase()) {
 
             found = i;
         }
