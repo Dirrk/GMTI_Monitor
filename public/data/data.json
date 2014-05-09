@@ -1573,6 +1573,18 @@
         ]
       }
     ],
+    "fronts": [
+          {
+              "id": 1,
+              "url": "/moc",
+              "name": "MOC"
+          },
+          {
+              "id": 2,
+              "url": "/phx",
+              "name": "PHX"
+          }
+    ],
     "archive": []
   }
 }
