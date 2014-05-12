@@ -87,7 +87,7 @@ exports.report = function(req, res) {
         data: sortServers(reportData)
     };
 
-
+    console.log(req.params);
     if (req.param.json && req.param.json === true)
     {
 
@@ -117,8 +117,12 @@ function sortServers(servers) {
 
 function combinedServers() {
 
-    var archived = nconf.use('data').get('db:archive');
     var current = nconf.use('data').get('servers');
+    return current;
+
+    // var archived = nconf.use('data').get('db:archive');
+
+    /*
     var combined = [];
 
     var addlater = [];
@@ -142,5 +146,5 @@ function combinedServers() {
         addlater.push(i);
     }
 
-
+    */
 }
