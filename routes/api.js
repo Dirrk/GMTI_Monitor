@@ -609,7 +609,7 @@ exports.saveToDisk = function saveToDisk (count) {
             {
                 if (temp.length > 0)
                 {
-                    if (temp[0].time <= (new Date().getTime() - 2700000))
+                    if (temp[0].time <= (new Date().getTime() - 3600000))
                     {
                          archiveData(servers[i].server, servers[i].data.shift());
                         // temp.shift();
