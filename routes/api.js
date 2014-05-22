@@ -227,11 +227,6 @@ function addServerData(server, cpu, mem, count) {
             }
         );
 
-        while (servers[found].data.length > 60)
-        {
-            servers[found].data.shift();
-        }
-
         data.set('servers', servers);
         data.set('lock', false);
     } else {
@@ -596,6 +591,8 @@ exports.saveToDisk = function saveToDisk (count) {
 
         // if (debug === true) { return };
 
+        console.log("Cleanup data");
+
         var data = nconf.use('data');
         var servers = data.get('servers');
         var toRemove = [];
@@ -611,6 +608,7 @@ exports.saveToDisk = function saveToDisk (count) {
                 {
                     if (temp[0].time <= (new Date().getTime() - 3600000))
                     {
+                        console.log("Sending to archive");
                          archiveData(servers[i].server, servers[i].data.shift());
                         // temp.shift();
                     } else {
@@ -661,6 +659,7 @@ exports.getArchive = function (req, res) {
 
 function archiveData(server, data) {
 
+    console.log("archive data");
 
     var db = nconf.use('data');
 
@@ -685,8 +684,14 @@ function archiveData(server, data) {
         temp.data.push(data);
         archiveServers.push(temp);
     } else {
+
         archiveServers[found].data.push(data);
+        if (archiveServers[found].data.length > 20160) // 2 weeks old
+        {
+            archiveServers[found].data.shift();
+        }
     }
+    db.set('db:archive', archiveServers);
 };
 
 
