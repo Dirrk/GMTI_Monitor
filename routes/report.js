@@ -3,25 +3,54 @@
  */
 
 var nconf = require('nconf');
+var util = require('util');
 
 exports.report = function(req, res) {
 
 
     var start = new Date();
     var end = new Date();
+    var numStart;
+    var numEnd;
 
-    start.setHours(new Date().getHours() - 1);
-    start.setMinutes(0);
-    start.setSeconds(0);
+    if (req.body.start) {
+        try {
+            numStart = parseInt(req.body.start);
+            start = new Date(0);
+            start.setUTCMilliseconds(numStart);
+            if (req.body.end) {
+                numEnd = parseInt(req.body.end);
+            } else {
+                numEnd = new Date().getTime();
+            }
 
-    end.setMinutes(0);
-    end.setSeconds(0);
+            end = new Date(0);
+            end.setUTCMilliseconds(numEnd);
 
-    var numStart = start.getTime();
-    var numEnd = end.getTime();
+        } catch (e) {
+
+            console.log(e);
+            res.send(500, "Invalid date request");
+            return;
+        }
+
+    } else {
+
+        start.setHours(new Date().getHours() - 1);
+        start.setMinutes(0);
+        start.setSeconds(0);
+
+        end.setMinutes(0);
+        end.setSeconds(0);
+        numStart = start.getTime();
+        numEnd = end.getTime();
+    }
+
+
+    console.log("Start: " + numStart + " - " + numEnd);
 
     var reportData = [];
-    var servers = combinedServers();
+    var servers = combinedServers(req.body);
     for (var i = 0; i < servers.length; i++) {
 
         reportData.push({
@@ -33,7 +62,10 @@ exports.report = function(req, res) {
 
             if (servers[i].data[j].time >= numStart && servers[i].data[j].time < numEnd)
             {
+                console.log("Adding data");
                 reportData[i].data.push(servers[i].data[j]);
+            } else {
+                console.log("Invalid time: " + servers[i].data[j].time);
             }
         }
     }
@@ -87,18 +119,15 @@ exports.report = function(req, res) {
         data: sortServers(reportData)
     };
 
-    console.log(req.params);
-    if (req.param.json && req.param.json === true)
+    if (req.param('json') == 1)
     {
-
         res.json(output);
 
     } else {
         res.render('report', output);
     }
-
-
 };
+
 
 function sortServers(servers) {
 
@@ -115,10 +144,42 @@ function sortServers(servers) {
     });
 }
 
-function combinedServers() {
+function combinedServers(body) {
 
-    var current = nconf.use('data').get('servers');
-    return current;
+    if (body && body.servers && body.servers.length > 0)
+    {
+
+        var archived = nconf.use('data').get('db:archive');
+        var ret = [];
+
+        for (var i = 0; i < archived.length; i++)
+        {
+            for (var j = 0; j < body.servers.length; j++)
+            {
+                if (archived[i].server == body.servers[j]) {
+
+                    ret.push(archived[i]);
+                    console.log("Found: " + archived[i].server);
+                    console.log(util.inspect(archived[i].data));
+
+                }
+            }
+        }
+
+        return ret;
+
+
+    } else if (body && body.start && body.end) {
+
+        console.log("Archive request");
+        return nconf.use('data').get('db:archive');
+
+    } else {
+        console.log("Current request");
+        var current = nconf.use('data').get('servers');
+        return current;
+    }
+
 
     // var archived = nconf.use('data').get('db:archive');
 

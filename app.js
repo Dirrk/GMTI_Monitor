@@ -134,6 +134,7 @@ else {
 
 
         app.get('/report', report.report);
+        app.post('/report', report.report);
 
         //      * catch everything else
         app.get('/*', dashboard.indexed);
