@@ -608,7 +608,7 @@ exports.saveToDisk = function saveToDisk (count) {
                 {
                     if (temp[0].time <= (new Date().getTime() - 3600000))
                     {
-                        console.log("Sending to archive");
+                        // console.log("Sending to archive");
                          archiveData(servers[i].server, servers[i].data.shift());
                         // temp.shift();
                     } else {
@@ -659,7 +659,7 @@ exports.getArchive = function (req, res) {
 
 function archiveData(server, data) {
 
-    console.log("archive data");
+    // console.log("archive data");
 
     var db = nconf.use('data');
 
