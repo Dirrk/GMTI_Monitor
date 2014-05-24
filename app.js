@@ -16,11 +16,27 @@ var cluster = require('cluster'),
 
 if (cluster.isMaster)
 {
+
+    console.log("Master started: " + (new Date).toLocaleString());
     slave = cluster.fork();
+    var lastDied = new Date().getTime();
 
     cluster.on('exit', function(deadSlave, code, signal) {
+
         console.log('Slave %d died with code/signal (%s). Restarting slave ', deadSlave.id, signal || code);
-        slave = cluster.fork(); // create new slave
+        if (((new Date()).getTime() - 2000) < lastDied) {
+
+            setTimeout(function () {
+                slave = cluster.fork('production');
+                lastDied = new Date().getTime();
+                console.log("Restarting to fast check data.json to see if it has been corrupted");
+            }, 5000);
+
+        } else {
+            slave = cluster.fork('production');
+            lastDied = new Date().getTime();
+        }
+
     });
 
 }
@@ -153,6 +169,22 @@ else {
             // everyone wins!
             next();
         }
+
+        process.on('SIGINT', lockData);
+        process.on('SIGHUP', lockData);
+        process.on('SIGQUIT', lockData);
+        process.on('SIGTERM', lockData);
+        process.on('SIGABRT', lockData);
+
+        function lockData() {
+            nconf.use('data').set('lock', true);
+            console.log("Received Signal");
+            setImmediate(process.exit());
+        };
+
+
     }
+
+
 
 }
