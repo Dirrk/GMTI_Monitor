@@ -151,7 +151,7 @@ function httpPerformRequest(server, cb) {
  */
 exports.update = function(req, res) {
 
-    console.log("Incoming Request: host=" + req.ip + " data=%j", req.body);
+    // console.log("Incoming Request: host=" + req.ip + " data=%j", req.body);
 
     var server,
         cpu = 0.00,
@@ -190,7 +190,7 @@ function addServerData(server, cpu, mem) {
         iterator,
         found;
 
-    console.log("AddServerData: %j", servers);
+    // console.log("AddServerData: %j", servers);
     for(iterator = 0, found = servers.length; iterator < servers.length; iterator++)
     {
 
@@ -564,7 +564,7 @@ exports.saveToDisk = function saveToDisk (count) {
                 if (err) {
                     console.log(err);
                 }
-                console.log("Saved successfully");
+                console.log("Saved successfully %s", (new Date()).toLocaleString());
                 nconf.set('lock', false);
             });
 
@@ -600,7 +600,7 @@ exports.saveToDisk = function saveToDisk (count) {
                             server: servers[i].server,
                             point: servers[i].data.shift()
                         };
-                        console.log("Sending to archive: %j", newArch);
+                        // console.log("Sending to archive: %j", newArch);
                         toArchive.push(newArch);
 
                     } else {
@@ -625,7 +625,7 @@ exports.saveToDisk = function saveToDisk (count) {
         nconf.set('servers', servers);
 
         if (toArchive.length > 0) {
-            console.log("Sending toArchive full %j", toArchive);
+            console.log("Archiving %d objects", toArchive.length);
             archiveData(toArchive, cb);
         } else if (cb) {
             cb();
@@ -656,31 +656,34 @@ function archiveData(toArchive, cb) {
 
     var archiveServers = nconf.get('db:archive');
 
-    console.log("Length: " + archiveServers.length);
-    console.log("Incoming: %j", toArchive);
+    // console.log("Length: " + archiveServers.length);
+    // console.log("Incoming: %j", toArchive);
 
     for (var i = 0; i < archiveServers.length; i++)
     {
-        var found = -1;
+        var found = [];
 
         for (var j = 0; j < toArchive.length; j++)
         {
             if (archiveServers[i].server.toLowerCase() == toArchive[j].server.toLowerCase()) {
 
-                found = j;
+                // console.log("Archive: %j", toArchive[j]);
+                // console.log("To: " + archiveServers[i].server + " at " + archiveServers[i].data);
+
+                archiveServers[i].data.push(toArchive[j].point);
+
+                found.push(j);
+
             }
         }
-        if (found >= 0) { // was found
+        if (found.length >= 0) { // was found
+            // This accounts for multiple archives added from the same host.
 
-            console.log("Archive: %j", toArchive[found]);
-            var temp = archiveServers[i].data;
-            console.log("To: " + archiveServers[i].server + " at %j", temp);
-
-            archiveServers[i].data.push(toArchive[found].point);
-
-            console.log("Before splice(%d): %j",found, toArchive);
-            toArchive = toArchive.splice(found, 1);
-            console.log("After splice: %j", toArchive);
+            for (var h = 0; h < found.length; h++)
+            {
+                toArchive = toArchive.splice(found[h], 1);
+            }
+            // console.log("After splice: %d", toArchive.length);
 
             if (toArchive.length === 0) // stop searching if we have found what we want
             {
@@ -690,7 +693,7 @@ function archiveData(toArchive, cb) {
     }
     if (toArchive.length > 0)
     {
-
+        console.warn("Adding new servers to archive: %j", toArchive);
         for (var k = 0; k < toArchive.length; k++)
         {
             archiveServers.push({

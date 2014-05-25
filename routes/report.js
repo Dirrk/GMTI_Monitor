@@ -2,7 +2,7 @@
  * Created by Derek Rada on 5/9/2014.
  */
 
-var nconf = require('nconf');
+var nconf = require('nconf').use('data');
 var util = require('util');
 
 exports.report = function(req, res) {
@@ -37,17 +37,17 @@ exports.report = function(req, res) {
     } else {
 
         start.setHours(new Date().getHours() - 1);
-        start.setMinutes(0);
-        start.setSeconds(0);
+//        start.setMinutes(0);
+//        start.setSeconds(0);
 
-        end.setMinutes(0);
-        end.setSeconds(0);
+//        end.setMinutes(0);
+//        end.setSeconds(0);
         numStart = start.getTime();
         numEnd = end.getTime();
     }
 
 
-    console.log("Start: " + numStart + " - " + numEnd);
+    console.log("Starting report for: " + numStart + " - " + numEnd);
 
     var reportData = [];
     var servers = combinedServers(req.body);
@@ -62,10 +62,10 @@ exports.report = function(req, res) {
 
             if (servers[i].data[j].time >= numStart && servers[i].data[j].time < numEnd)
             {
-                console.log("Adding data");
+                // console.log("Adding data");
                 reportData[i].data.push(servers[i].data[j]);
             } else {
-                console.log("Invalid time: " + servers[i].data[j].time);
+                // console.log("Invalid time: " + servers[i].data[j].time);
             }
         }
     }
@@ -121,7 +121,17 @@ exports.report = function(req, res) {
 
     if (req.param('json') == 1)
     {
-        res.json(output);
+        console.log("Output: %j", output.data);
+        try {
+            res.json(output);
+        } catch (e) {
+            console.log(e);
+            try {
+                res.send(500);
+            } catch (ignore) {
+                console.log("Couldn't send 500 it was already sent");
+            }
+        }
 
     } else {
         res.render('report', output);
@@ -146,10 +156,12 @@ function sortServers(servers) {
 
 function combinedServers(body) {
 
+    console.log("POST Report: %j", body);
+
     if (body && body.servers && body.servers.length > 0)
     {
 
-        var archived = nconf.use('data').get('db:archive');
+        var archived = nconf.get('db:archive');
         var ret = [];
 
         for (var i = 0; i < archived.length; i++)
@@ -159,8 +171,8 @@ function combinedServers(body) {
                 if (archived[i].server == body.servers[j]) {
 
                     ret.push(archived[i]);
-                    console.log("Found: " + archived[i].server);
-                    console.log(util.inspect(archived[i].data));
+                    // console.log("Found: " + archived[i].server);
+                    // console.log(util.inspect(archived[i].data));
 
                 }
             }
@@ -172,11 +184,11 @@ function combinedServers(body) {
     } else if (body && body.start && body.end) {
 
         console.log("Archive request");
-        return nconf.use('data').get('db:archive');
+        return nconf.get('db:archive');
 
     } else {
         console.log("Current request");
-        var current = nconf.use('data').get('servers');
+        var current = nconf.get('servers');
         return current;
     }
 

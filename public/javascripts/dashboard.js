@@ -280,6 +280,12 @@ function safeHandler(dataId) {
 
         var data = [cpuLine, memLine];
         var options = {
+            zoom: {
+                interactive: true
+            },
+            pan: {
+                interactive: true
+            },
             grid: {
                   hoverable: true
             },
@@ -291,7 +297,8 @@ function safeHandler(dataId) {
             yaxis: {
                 min: 0,
                 max: 100,
-                tickSize: 10
+                tickSize: 20,
+                zoomRange: [0,100]
             },
             lines: {
                    show: true

@@ -1,30 +1,30 @@
 //
    Created by Derek on 5/9/2014.
 
-table
+table(style="width: 100%")
     tr
-        td(stye="width: 14%") Start:
-        td(stye="width: 14%") #{start}
+        td(style="width: 12%; height: 20px;") Start:
+        td(style="width: 60%; height: 20px;") #{start}
     tr
-        td(stye="width: 14%") End
-        td(stye="width: 14%") #{end}
+        td(style="width: 12%; height: 20px;") End
+        td(style="width: 60%; height: 20px;") #{end}
 
 
-table(stye="width: 100%")
+table(style="width: 100%")
     thead
-        td(stye="width: 14%") Server
-        td(stye="width: 14%") Average CPU
-        td(stye="width: 14%") Average Mem
-        td(stye="width: 14%") High CPU
-        td(stye="width: 14%") Low CPU
-        td(stye="width: 14%") High Mem
-        td(stye="width: 14%") Low Mem
+        td(style="width: 12%; height: 20px;") Server(datapoints)
+        td(style="width: 12%; height: 20px;") Average CPU
+        td(style="width: 12%; height: 20px;") Average Mem
+        td(style="width: 12%; height: 20px;") High CPU
+        td(style="width: 12%; height: 20px;") Low CPU
+        td(style="width: 12%; height: 20px;") High Mem
+        td(style="width: 12%; height: 20px;") Low Mem
     each serv,i in data
         tr(style=(i%2 == 0) ? 'background-color: lightgrey' : 'background-color: white')
-            td(stye="width: 14%") #{serv.server}
-            td(stye="width: 14%") #{serv.averageCPU}
-            td(stye="width: 14%") #{serv.averageMem}
-            td(stye="width: 14%") #{serv.highCPU}
-            td(stye="width: 14%") #{serv.lowCPU}
-            td(stye="width: 14%") #{serv.highMem}
-            td(stye="width: 14%") #{serv.lowMem}
+            td(style="width: 12%; height: 20px;") #{serv.server}(#{serv.data.length})
+            td(style="width: 12%; height: 20px;") #{serv.averageCPU}
+            td(style="width: 12%; height: 20px;") #{serv.averageMem}
+            td(style="width: 12%; height: 20px;") #{serv.highCPU}
+            td(style="width: 12%; height: 20px;") #{serv.lowCPU}
+            td(style="width: 12%; height: 20px;") #{serv.highMem}
+            td(style="width: 12%; height: 20px;") #{serv.lowMem}
