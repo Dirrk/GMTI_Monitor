@@ -670,18 +670,14 @@ function archiveData(toArchive /* [{server, data}]*/) {
         }
         if (found >= 0) { // was found
 
-            console.log("To Archive: ");
+            console.log("Archive: ");
             console.log(toArchive[found]);
 
-            console.log("To Archive 2: ");
-            console.log(archiveServers[i]);
+            console.log("Data: ");
+            console.log(archiveServers[i].server);
 
-            archivedData = archiveServers[i];
 
-            console.log("To Archive 3: ");
-            console.log(archivedData.data[0]);
-
-            archivedData.data.push(toArchive[found].data);
+            archiveServers[i].data.push(toArchive[found].data);
 
             toArchive = toArchive.splice(found, 1);
 
