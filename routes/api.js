@@ -554,7 +554,7 @@ exports.manageDash = function (req, res) {
 exports.saveToDisk = function saveToDisk (count) {
 
     var data = nconf.use('data');
-    count = count || 0;
+    var count = count || 0;
     count++;
 
     if (data.get('lock') === false || count >= 5)
