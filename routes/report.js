@@ -183,11 +183,11 @@ function combinedServers(body) {
 
     } else if (body && body.start && body.end) {
 
-        console.log("Archive request");
+        // console.log("Archive request");
         return nconf.get('archive');
 
     } else {
-        console.log("Current request");
+        // console.log("Current request");
         var current = nconf.get('servers');
         return current;
     }
