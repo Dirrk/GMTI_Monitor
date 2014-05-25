@@ -7,11 +7,12 @@
  *
  */
 
-var nconf = require('nconf');
+var nconf = require('nconf').use('data');
 var debug = false;
 var util = require('util');
 var async = require('async');
 var http = require('http');
+
 
 /*  API Calls
 
@@ -75,7 +76,7 @@ exports.startCollector = function startCollector(time) {
                 for ( var i = 0; i < results.length; i++ ) {
                     if (results[i] != 'empty') {
                         var serverData = JSON.parse(results[i]);
-                        addServerData(serverData.server, serverData.cpu, serverData.mem, 0);
+                        addServerData(serverData.server, serverData.cpu, serverData.mem);
                     }
                 }
                 var endTime = new Date().getTime();
@@ -150,6 +151,8 @@ function httpPerformRequest(server, cb) {
  */
 exports.update = function(req, res) {
 
+    console.log("Incoming Request: host=" + req.ip + " data=%j", req.body);
+
     var server,
         cpu = 0.00,
         memUsed = 0,
@@ -179,58 +182,48 @@ exports.update = function(req, res) {
 
 };
 
-function addServerData(server, cpu, mem, count) {
+function addServerData(server, cpu, mem) {
 
-    var data = nconf.use('data');
-    server = server.split('.')[0];
+    var server = server.split('.')[0];
 
-    if (data.get('lock') === false || count >= 5)
+    var servers = nconf.get('servers'),
+        iterator,
+        found;
+
+    console.log("AddServerData: %j", servers);
+    for(iterator = 0, found = servers.length; iterator < servers.length; iterator++)
     {
-        data.set('lock', true);
-        var servers = data.get('servers'),
-            iterator,
-            found;
 
-        for(iterator = 0, found = servers.length; iterator < servers.length; iterator++)
+        if (servers[iterator].server.toUpperCase() == server.toUpperCase())
         {
-
-            if (servers[iterator].server.toUpperCase() == server.toUpperCase())
-            {
-                found = iterator;
-            }
+            found = iterator;
         }
-        if (found === servers.length)
-        {
-            servers.push(
-                {
-                    server: server,
-                    group: lookUpGroup(server),
-                    data: []
-                }
-            );
-        } else if (servers[found].group !== undefined || servers[found].group !== null || servers[found].group < 0) {
-
-            // new server will always have this old servers may not have this data because pre vrc1.3 did not have the group info in data.json
-            servers[found].group = lookUpGroup(server);
-
-        }
-        servers[found].data.push(
+    }
+    if (found === servers.length)
+    {
+        servers.push(
             {
-                time: new Date().getTime(),
-                cpu: cpu || 0.00,
-                mem: mem || 0.00
+                server: server,
+                group: lookUpGroup(server),
+                data: []
             }
         );
+    } else if (servers[found].group !== undefined || servers[found].group !== null || servers[found].group < 0) {
 
-        data.set('servers', servers);
-        data.set('lock', false);
-    } else {
-        count = count || 0;
-        count++;
-        setTimeout(function() {
-            addServerData(server, cpu, mem, count);
-        }, Math.floor(Math.random() * 100))
+        // new server will always have this old servers may not have this data because pre vrc1.3 did not have the group info in data.json
+        servers[found].group = lookUpGroup(server);
+
     }
+    servers[found].data.push(
+        {
+            time: new Date().getTime(),
+            cpu: cpu || 0.00,
+            mem: mem || 0.00
+        }
+    );
+
+    nconf.set('servers', servers);
+    nconf.set('lock', false);
 };
 
 exports.save = function(req, res) {
@@ -553,29 +546,29 @@ exports.manageDash = function (req, res) {
  */
 exports.saveToDisk = function saveToDisk (count) {
 
-    var data = nconf.use('data');
     var count = count || 0;
     count++;
 
-    if (data.get('lock') === false || count >= 5)
+    if (nconf.get('lock') === false || count >= 5)
     {
         if (count == 5)
         {
             console.log("Force Saving data to disk " + (new Date).toLocaleString());
         }
 
-        data.set('lock', true);
+        nconf.set('lock', true);
 
-        cleanUpData();
+        cleanUpData(function () {
 
-        nconf.save(function(err) { // then data
-            if (err) {
-                console.log(err);
-            }
-            console.log("Saved");
-            data.set('lock', false);
+            nconf.save(function(err) { // then data
+                if (err) {
+                    console.log(err);
+                }
+                console.log("Saved successfully");
+                nconf.set('lock', false);
+            });
+
         });
-
 
     } else {
         setTimeout(function() {
@@ -583,11 +576,11 @@ exports.saveToDisk = function saveToDisk (count) {
         }, Math.floor(Math.random() * 100))
     }
 
-    function cleanUpData() {
+    function cleanUpData(cb) {
 
         // if (debug === true) { return };
 
-        var servers = nconf.use('data').get('servers');
+        var servers = nconf.get('servers');
         var toRemove = [];
         var toArchive = [];
 
@@ -603,8 +596,12 @@ exports.saveToDisk = function saveToDisk (count) {
                     if (temp[0].time <= (new Date().getTime() - 3600000))
                     {
                         // console.log("Sending to archive");
-                        toArchive.push({ server: servers[i].server,
-                                           point: servers[i].data.shift() });
+                        var newArch = {
+                            server: servers[i].server,
+                            point: servers[i].data.shift()
+                        };
+                        console.log("Sending to archive: %j", newArch);
+                        toArchive.push(newArch);
 
                     } else {
                         done = true;
@@ -625,11 +622,16 @@ exports.saveToDisk = function saveToDisk (count) {
             servers.splice(toRemove[k], 1);
         }
 
-        if (toArchive.length > 0) {
-            archiveData(toArchive);
-        }
+        nconf.set('servers', servers);
 
-        nconf.use('data').set('servers', servers);
+        if (toArchive.length > 0) {
+            console.log("Sending toArchive full %j", toArchive);
+            archiveData(toArchive, cb);
+        } else if (cb) {
+            cb();
+        } else {
+            console.log("Should not happen ever");
+        }
 
     };
 
@@ -645,7 +647,7 @@ exports.getArchive = function (req, res) {
 };
 
 
-function archiveData(toArchive /* [{server, data}]*/) {
+function archiveData(toArchive, cb) {
 
     // console.log("archive data");
     if (!toArchive || toArchive.length === 0) {
@@ -655,6 +657,7 @@ function archiveData(toArchive /* [{server, data}]*/) {
     var archiveServers = nconf.get('db:archive');
 
     console.log("Length: " + archiveServers.length);
+    console.log("Incoming: %j", toArchive);
 
     for (var i = 0; i < archiveServers.length; i++)
     {
@@ -670,11 +673,14 @@ function archiveData(toArchive /* [{server, data}]*/) {
         if (found >= 0) { // was found
 
             console.log("Archive: %j", toArchive[found]);
-            console.log("To: " + archiveServers[i].server + " at " + archiveServers[i].data.length);
+            var temp = archiveServers[i].data;
+            console.log("To: " + archiveServers[i].server + " at %j", temp);
 
             archiveServers[i].data.push(toArchive[found].point);
 
+            console.log("Before splice(%d): %j",found, toArchive);
             toArchive = toArchive.splice(found, 1);
+            console.log("After splice: %j", toArchive);
 
             if (toArchive.length === 0) // stop searching if we have found what we want
             {
@@ -695,6 +701,9 @@ function archiveData(toArchive /* [{server, data}]*/) {
     }
 
     nconf.set('db:archive', archiveServers);
+    setImmediate(function () {
+        cb();
+    });
 };
 
 

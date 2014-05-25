@@ -47,6 +47,7 @@ if (cluster.isMaster)
 
 else {
 
+
     strictWrapper();
     function strictWrapper() {
         "use strict";
@@ -55,6 +56,11 @@ else {
 
         // Express app
         var express = require('express');
+
+        // nconf
+        var nconf = require('nconf');
+        nconf.add('data', {type: 'file', file: './public/data/data.json', loadSync: true });
+        nconf.use('data').set('lock', false);
 
         // Routes
         var routes = require('./routes');
@@ -67,21 +73,29 @@ else {
         var http = require('http');
         var path = require('path');
 
-        // Custom
-        var nconf = require('nconf');
 
-
-        // Load nconf files or fail
-        nconf.add('data', {type: 'file', file: './public/data/data.json', loadSync: true });
-        nconf.use('data').set('lock', false);
-        var archive = nconf.use('data').get('db:archive');
+        // fix nconf setups
+        var archive = nconf.get('db:archive');
 
         // nconf.use('data').set('db:archive', []);
         if (archive == null || archive == undefined || archive.length == null || archive.length == undefined || archive.length === 0) {
-            nconf.use('data').set('db:archive', []);
-            console.log("Created archive");
 
+            archive = nconf.get('archive');
+            if (archive == null || archive.length == null)
+            {
+                nconf.set('archive', []);
+            } else {
+              console.log("Archive is in correct formats starting cleanup");
+            }
+        } else {
+            // console.log(archive);
+            console.log("Archive found in the wrong section.  Beginning to move to new location");
+            // nconf.set('archive', archive);
+            // api.saveToDisk(5);
+            // nconf.clear('db:archive');
         }
+
+
         var fronts = nconf.use('data').get('db:fronts');
         if (fronts == null || fronts == undefined || fronts.length == null || fronts.length == undefined || fronts.length === 0) {
             nconf.use('data').set('db:fronts', [{
@@ -96,8 +110,6 @@ else {
             }]);
             api.saveToDisk(0);
         }
-
-        console.log(nconf.get("db"));
 
         // Bind express and begin setting up the environment
         var app = express();
