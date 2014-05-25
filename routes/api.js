@@ -568,10 +568,11 @@ exports.saveToDisk = function saveToDisk (count) {
 
         cleanUpData();
 
-        nconf.use('data').save(function(err) { // then data
+        nconf.save(function(err) { // then data
             if (err) {
                 console.log(err);
             }
+            console.log("Saved");
             data.set('lock', false);
         });
 
@@ -651,9 +652,7 @@ function archiveData(toArchive /* [{server, data}]*/) {
         return;
     }
 
-    var db = nconf.use('data');
-
-    var archiveServers = db.get('db:archive');
+    var archiveServers = nconf.get('db:archive');
 
     console.log("Length: " + archiveServers.length);
 
@@ -670,14 +669,10 @@ function archiveData(toArchive /* [{server, data}]*/) {
         }
         if (found >= 0) { // was found
 
-            console.log("Archive: ");
-            console.log(toArchive[found]);
+            console.log("Archive: %j", toArchive[found]);
+            console.log("To: " + archiveServers[i].server + " at " + archiveServers[i].data.length);
 
-            console.log("Data: ");
-            console.log(archiveServers[i].server);
-
-
-            archiveServers[i].data.push(toArchive[found].data);
+            archiveServers[i].data.push(toArchive[found].point);
 
             toArchive = toArchive.splice(found, 1);
 
@@ -687,17 +682,19 @@ function archiveData(toArchive /* [{server, data}]*/) {
             }
         }
     }
-    if (toArchive.length !== 0)
+    if (toArchive.length > 0)
     {
 
         for (var k = 0; k < toArchive.length; k++)
         {
-            archiveServers.push(toArchive[k]);
+            archiveServers.push({
+                server: toArchive[k].server,
+                data: [ toArchive[k].point ]
+            });
         }
-
     }
 
-    db.set('db:archive', archiveServers);
+    nconf.set('db:archive', archiveServers);
 };
 
 
