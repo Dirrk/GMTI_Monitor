@@ -8,7 +8,6 @@
  */
 
 var nconf = require('nconf');
-var numUpdates = 0;
 var debug = false;
 var util = require('util');
 var async = require('async');
@@ -177,10 +176,6 @@ exports.update = function(req, res) {
 
     // add data to nconf
     addServerData(server, cpu, mem);
-    numUpdates++;
-    if ((numUpdates % 50) === 0) {
-        exports.saveToDisk(0);
-    }
 
 };
 
@@ -591,11 +586,9 @@ exports.saveToDisk = function saveToDisk (count) {
 
         // if (debug === true) { return };
 
-        console.log("Cleanup data");
-
-        var data = nconf.use('data');
-        var servers = data.get('servers');
+        var servers = nconf.use('data').get('servers');
         var toRemove = [];
+        var toArchive = [];
 
         for(var i = 0; i < servers.length; i++)
         {
@@ -609,8 +602,9 @@ exports.saveToDisk = function saveToDisk (count) {
                     if (temp[0].time <= (new Date().getTime() - 3600000))
                     {
                         // console.log("Sending to archive");
-                         archiveData(servers[i].server, servers[i].data.shift());
-                        // temp.shift();
+                        toArchive.push({ server: servers[i].server,
+                                           point: servers[i].data.shift() });
+
                     } else {
                         done = true;
                     }
@@ -630,19 +624,12 @@ exports.saveToDisk = function saveToDisk (count) {
             servers.splice(toRemove[k], 1);
         }
 
-        var servers2 = servers.sort(function (a, b) { // sort before saving
-            if (a.server < b.server)
-            {
-                return -1;
-            } else if (a.server > b.server) {
-                return 1;
-            } else {
-                return 0;
-            }
+        if (toArchive.length > 0) {
+            archiveData(toArchive);
+        }
 
-        });
+        nconf.use('data').set('servers', servers);
 
-        data.set('servers', servers2);
     };
 
 
@@ -657,40 +644,63 @@ exports.getArchive = function (req, res) {
 };
 
 
-function archiveData(server, data) {
+function archiveData(toArchive /* [{server, data}]*/) {
 
     // console.log("archive data");
+    if (!toArchive || toArchive.length === 0) {
+        return;
+    }
 
     var db = nconf.use('data');
 
     var archiveServers = db.get('db:archive');
 
-    var found = -1;
+    console.log("Length: " + archiveServers.length);
+
     for (var i = 0; i < archiveServers.length; i++)
     {
+        var found = -1;
 
-        if (archiveServers[i].server.toLowerCase() == server.toLowerCase()) {
-
-            found = i;
-        }
-    }
-    if (found === -1)
-    {
-        var temp = {
-
-            server: server,
-            data: []
-        };
-        temp.data.push(data);
-        archiveServers.push(temp);
-    } else {
-
-        archiveServers[found].data.push(data);
-        if (archiveServers[found].data.length > 20160) // 2 weeks old
+        for (var j = 0; j < toArchive.length; j++)
         {
-            archiveServers[found].data.shift();
+            if (archiveServers[i].server.toLowerCase() == toArchive[j].server.toLowerCase()) {
+
+                found = j;
+            }
+        }
+        if (found >= 0) { // was found
+
+            console.log("To Archive: ");
+            console.log(toArchive[found]);
+
+            console.log("To Archive 2: ");
+            console.log(archiveServers[i]);
+
+            archivedData = archiveServers[i];
+
+            console.log("To Archive 3: ");
+            console.log(archivedData.data[0]);
+
+            archivedData.data.push(toArchive[found].data);
+
+            toArchive = toArchive.splice(found, 1);
+
+            if (toArchive.length === 0) // stop searching if we have found what we want
+            {
+                i = archiveServers.length;
+            }
         }
     }
+    if (toArchive.length !== 0)
+    {
+
+        for (var k = 0; k < toArchive.length; k++)
+        {
+            archiveServers.push(toArchive[k]);
+        }
+
+    }
+
     db.set('db:archive', archiveServers);
 };
 
