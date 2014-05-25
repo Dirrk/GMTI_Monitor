@@ -48,7 +48,87 @@ if (cluster.isMaster)
 else {
 
 
-    strictWrapper();
+    var nconf = require('nconf');
+    nconf.add('data', {type: 'file', file: './public/data/data.json', loadSync: true });
+    nconf.use('data').set('lock', false);
+
+    var settings = require('./settings.json');
+
+    // Setup before allowing slave to even start
+
+    // fix nconf setups
+
+    startSlave();
+    function startSlave() {
+
+        fixFronts();
+
+        fixArchive(function (val) {
+            if (val === true) {
+                strictWrapper();
+            }
+        });
+    };
+
+    function checkDataFiles() {
+        // TODO set up later
+    };
+
+    function fixArchive(cb) {
+
+        var archive;
+
+        try {
+
+            archive = nconf.get('db:archive');
+
+        } catch (e) {
+            console.error(e);
+            cb(false);
+        }
+
+        // nconf.use('data').set('db:archive', []);
+        if (archive == null || archive == undefined || archive.length == null || archive.length == undefined || archive.length === 0) {
+
+            archive = nconf.get('archive');
+            if (archive == null || archive.length == null)
+            {
+                nconf.set('archive', []);
+                cb(true);
+            } else {
+                console.log("Archive is in correct formats starting cleanup");
+                cb(true);
+            }
+        } else {
+            console.log("Archive found in the wrong section.  Beginning to move to new location");
+            nconf.set('archive', archive);
+            nconf.clear('db:archive');
+            nconf.save(function() {
+                console.log("Moved archive over successfully Servers Found: %d", nconf.get('archive').length);
+                cb(true);
+            });
+        }
+    };
+
+    function fixFronts() {
+        var fronts = nconf.get('db:fronts');
+        if (fronts == null || fronts == undefined || fronts.length == null || fronts.length == undefined || fronts.length === 0) {
+            nconf.set('db:fronts', [{
+                                                    "id": 1,
+                                                    "url": "/moc",
+                                                    "name": "MOC"
+                                                },
+                                                {
+                                                    "id": 2,
+                                                    "url": "/phx",
+                                                    "name": "PHX"
+                                                }]);
+            nconf.save();
+        }
+    };
+
+
+
     function strictWrapper() {
         "use strict";
 
@@ -58,9 +138,6 @@ else {
         var express = require('express');
 
         // nconf
-        var nconf = require('nconf');
-        nconf.add('data', {type: 'file', file: './public/data/data.json', loadSync: true });
-        nconf.use('data').set('lock', false);
 
         // Routes
         var routes = require('./routes');
@@ -73,43 +150,6 @@ else {
         var http = require('http');
         var path = require('path');
 
-
-        // fix nconf setups
-        var archive = nconf.get('db:archive');
-
-        // nconf.use('data').set('db:archive', []);
-        if (archive == null || archive == undefined || archive.length == null || archive.length == undefined || archive.length === 0) {
-
-            archive = nconf.get('archive');
-            if (archive == null || archive.length == null)
-            {
-                nconf.set('archive', []);
-            } else {
-              console.log("Archive is in correct formats starting cleanup");
-            }
-        } else {
-            // console.log(archive);
-            console.log("Archive found in the wrong section.  Beginning to move to new location");
-            // nconf.set('archive', archive);
-            // api.saveToDisk(5);
-            // nconf.clear('db:archive');
-        }
-
-
-        var fronts = nconf.use('data').get('db:fronts');
-        if (fronts == null || fronts == undefined || fronts.length == null || fronts.length == undefined || fronts.length === 0) {
-            nconf.use('data').set('db:fronts', [{
-                "id": 1,
-                "url": "/moc",
-                "name": "MOC"
-            },
-            {
-                "id": 2,
-                "url": "/phx",
-                "name": "PHX"
-            }]);
-            api.saveToDisk(0);
-        }
 
         // Bind express and begin setting up the environment
         var app = express();

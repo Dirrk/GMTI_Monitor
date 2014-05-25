@@ -161,7 +161,7 @@ function combinedServers(body) {
     if (body && body.servers && body.servers.length > 0)
     {
 
-        var archived = nconf.get('db:archive');
+        var archived = nconf.get('archive');
         var ret = [];
 
         for (var i = 0; i < archived.length; i++)
@@ -184,7 +184,7 @@ function combinedServers(body) {
     } else if (body && body.start && body.end) {
 
         console.log("Archive request");
-        return nconf.get('db:archive');
+        return nconf.get('archive');
 
     } else {
         console.log("Current request");
@@ -193,7 +193,7 @@ function combinedServers(body) {
     }
 
 
-    // var archived = nconf.use('data').get('db:archive');
+    // var archived = nconf.use('data').get('archive');
 
     /*
     var combined = [];

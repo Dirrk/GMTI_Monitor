@@ -641,7 +641,7 @@ exports.saveToDisk = function saveToDisk (count) {
 exports.getArchive = function (req, res) {
 
 
-    var db = nconf.get('db:archive');
+    var db = nconf.get('archive');
     res.json(db);
 
 };
@@ -654,7 +654,7 @@ function archiveData(toArchive, cb) {
         return;
     }
 
-    var archiveServers = nconf.get('db:archive');
+    var archiveServers = nconf.get('archive');
 
     // console.log("Length: " + archiveServers.length);
     // console.log("Incoming: %j", toArchive);
@@ -703,7 +703,7 @@ function archiveData(toArchive, cb) {
         }
     }
 
-    nconf.set('db:archive', archiveServers);
+    nconf.set('archive', archiveServers);
     setImmediate(function () {
         cb();
     });
