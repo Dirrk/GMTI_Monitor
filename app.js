@@ -193,10 +193,5 @@ else {
             console.log("Received Signal");
             setImmediate(process.exit());
         };
-
-
     }
-
-
-
 }
