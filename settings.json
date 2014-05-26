@@ -1,4 +1,8 @@
 {
 
-    
+    "dataDirectory": "./public/data/",
+    "dataFile": "data.json",
+    "archiveFolder": "./public/data/",
+    "tempArchiveLength": 2,
+    "archiveDays": 14
 }
