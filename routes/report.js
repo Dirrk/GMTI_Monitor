@@ -221,3 +221,10 @@ function combinedServers(body) {
 
     */
 }
+
+
+exports.customReport = function() {
+
+
+
+};
