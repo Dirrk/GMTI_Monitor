@@ -6,15 +6,40 @@ var FlotHelper = function () {
 
     var self = this;
 
-    self.loadMultiServerTimeGraph = function(elementId, data) {
+    self.loadMultiServerTimeGraph = function(elementId, data, dataTypes) {
 
         var plotData = [];
+        console.log("data.length: " + data.length);
         var xRangeStart = 0;
         var xRangeEnd = 0;
         for(var i = 0; i < data.length; i++)
         {
             // cpu line for this group
-            var cpuLine = {
+            for (var h = 0;h < dataTypes.length; h++) {
+
+                var aLine = {
+                    label: dataTypes[h] + " " + data[i].server,
+                    data: []
+
+                };
+
+                for (var j = 0; j < data[i].data.length; j++)
+                {
+                    if (xRangeStart === 0 || xRangeStart > data[i].data[j].time) {
+                        xRangeStart = data[i].data[j].time;
+                    }
+                    if (xRangeEnd === 0 || xRangeEnd < data[i].data[j].time) {
+                        xRangeEnd = data[i].data[j].time;
+                    }
+                    aLine.data.push([data[i].data[j].time, data[i].data[j][dataTypes[h]]]);
+
+                   /* cpuLine.data.push([data[i].data[j].time, data[i].data[j].cpu]);
+                    memLine.data.push([data[i].data[j].time, data[i].data[j].mem]);*/
+                }
+                plotData.push(aLine);
+
+            }
+            /*var cpuLine = {
                 label: "CPU: " + data[i].server,
                 data: []
             };
@@ -23,8 +48,8 @@ var FlotHelper = function () {
             var memLine = {
                 label: "MEM: " + data[i].server,
                 data: []
-            };
-
+            };*/
+/*
             for (var j = 0; j < data[i].data.length; j++)
             {
                 if (xRangeStart === 0 || xRangeStart > data[i].data[j].time) {
@@ -38,17 +63,17 @@ var FlotHelper = function () {
             }
 
             plotData.push(memLine);
-            plotData.push(cpuLine);
+            plotData.push(cpuLine);*/
         }
+
+        console.log(plotData);
 
         var options = {
 
            zoom: {
              interactive: true
            },
-           pan: {
-             interactive: true
-           },
+
             grid: {
                 hoverable: true,
                 clickable: true
@@ -83,22 +108,9 @@ var FlotHelper = function () {
             }
         };
 
-        var plot = $.plot($(elementId), plotData, options);
+        console.log("plotData: " + plotData);
 
-        /*
-        $("#groupAverages").bind("plotclick", function (event, pos, item) {
-            if (item)
-            {
-                var cpuOrMem = item.seriesIndex % 2; // 0 = MEM 1 = CPU
-                var newIndex = item.seriesIndex;
-                if (cpuOrMem === 1) {
-                    newIndex = newIndex - 1;
-                }
-                newIndex = newIndex / 2;
-                drillDownGroup(data[newIndex], timeArray, cpuOrMem);
-            }
-        });
-        */
+        var plot = $.plot($(elementId), plotData, options);
 
     };
 

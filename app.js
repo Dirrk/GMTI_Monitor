@@ -49,10 +49,13 @@ if (cluster.isMaster)
 
 else {
 
-    console.log("%s :: Attempting to start slave process pid: %d", (new Date).toLocaleString(), process.pid);
+
 
     var easylogger = require('easy-logger');
-    var log = easylogger.startGlobal();
+    var log = easylogger.startGlobal({ level: 1 }); // 1 == debug
+
+    log.log("Attempting to start slave process pid: %d", process.pid);
+
     global._lockArchive = false;
     var fs = require('fs');
     var path = require('path');
@@ -79,6 +82,7 @@ else {
     function startSlave() {
 
         fixFronts();
+        fixDataTypes();
 
         fixArchive(function (val) {
             if (val === true) {
@@ -365,6 +369,22 @@ else {
         }
     };
 
+    function fixDataTypes() {
+        var dataTypes = nconf.get('db:dataTypes');
+        if (dataTypes == null || dataTypes == undefined || dataTypes === []) {
+            dataTypes = [
+                {
+                    id: 0,
+                    name: 'cpu'
+                },
+                {
+                    id: 1,
+                    name: 'mem'
+                }
+            ];
+            nconf.set("db:dataTypes", dataTypes);
+        }
+    };
 
 
     function strictWrapper() {
@@ -440,6 +460,7 @@ else {
 
         app.get('/report', report.report);
         app.post('/report', report.report);
+        app.get('/custom', report.customReport);
 
         //      * catch everything else
         app.get('/*', dashboard.indexed);

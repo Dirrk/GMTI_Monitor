@@ -223,8 +223,13 @@ function combinedServers(body) {
 }
 
 
-exports.customReport = function() {
+exports.customReport = function(req, res) {
 
+    var servers = nconf.get('db:servers');
 
+    res.render('dashboard2', {
+        servers: servers,
+        dataTypes: nconf.get('db:dataTypes')
+    });
 
 };
