@@ -52,7 +52,7 @@ else {
 
 
     var easylogger = require('easy-logger');
-    var log = easylogger.startGlobal({ level: 1 }); // 1 == debug
+    var log = easylogger.startGlobal({ level: 3 });
 
     log.log("Attempting to start slave process pid: %d", process.pid);
 
@@ -87,9 +87,9 @@ else {
         fixArchive(function (val) {
             if (val === true) {
 
-                log.log("Attempting to clean archive storage");
+                log.debug("Attempting to clean archive storage");
                 cleanUpArchive(function () {
-                    log.log("Successfully cleaned archive storage");
+                    log.debug("Successfully cleaned archive storage");
                     strictWrapper();
                 });
             }
@@ -491,7 +491,7 @@ else {
 
         function lockData() {
             nconf.use('data').set('lock', true);
-            log.log("Received Signal");
+            log.warn("Received Signal");
             setImmediate(process.exit());
         };
     }

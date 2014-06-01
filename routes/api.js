@@ -84,7 +84,7 @@ exports.startCollector = function startCollector(time) {
 
                 startCollector(30000 - (endTime - startTime));
 
-                log.log(results);
+                log.debug(results);
 
 
             }
@@ -122,20 +122,20 @@ function httpPerformRequest(server, cb) {
         });
         res.on('error', function (err) {
             req.abort();
-            util.error(err);
+            log.error(err);
             cb('empty');
         });
     });
 
     req.on('error', function(err) {
-        log.log("Error trying to update " + server.server);
-        log.log(err);
+        log.error("Error trying to update " + server.server);
+        log.error(err);
         cb('empty')
     });
     try {
         req.end();
     } catch (e) {
-        util.error(e);
+        log.error(e);
         cb('empty');
     }
 
@@ -191,7 +191,7 @@ function addServerData(server, cpu, mem) {
         iterator,
         found;
 
-    // log.log("AddServerData: %j", servers);
+    log.debug("AddServerData: %j", servers);
     for(iterator = 0, found = servers.length; iterator < servers.length; iterator++)
     {
 
@@ -272,7 +272,7 @@ exports.manageServer = function (req, res) {
         exports.saveToDisk(5);
         res.send(200);
     } else {
-        log.log(req.body);
+        log.debug(req.body);
         res.send(400);
     }
 };
@@ -301,8 +301,7 @@ exports.data = function (req, res) {
                   });
 
     } else {
-        util.log("Requested invalid data");
-        util.inspect(req.body);
+        log.warn("Requested invalid data %j", req.body);
         res.json([]);
     }
 
@@ -325,7 +324,7 @@ exports.getData = function (req, res) {
                       }); // reply with servers json
 
         } catch (e) { // catch the error n send 500
-            util.log(e);
+            log.error(e);
             res.send(500);
         }
 
@@ -366,7 +365,7 @@ exports.createServer = function (req, res) {
             }
         }
         catch (e) {
-            log.log(e);
+            log.error(e);
             res.send(400);
             return;
         }
@@ -408,7 +407,7 @@ exports.manageGroup = function (req, res) {
     if (req.body.command && req.body.group) {
 
         var group = req.body.group;
-        log.log(req.body);
+        log.debug(req.body);
 
         switch (req.body.command) {
 
@@ -420,12 +419,12 @@ exports.manageGroup = function (req, res) {
                         groups[i].name = group.name;
                     }
                 }
-                log.log(group);
+                log.debug(group);
                 nconf.set('db:groups', groups);
                 break;
             case 'DELETE':
 
-                log.log("Deleting");
+                log.debug("Deleting");
                 var found = groups.length;
                 for (var i = 0; i < groups.length; i++) {
 
@@ -434,7 +433,7 @@ exports.manageGroup = function (req, res) {
                     }
                 }
                 if (found < groups.length) {
-                    log.log("Deleting 1");
+                    log.debug("Deleting 1");
                     groups.splice(found, 1);
                 }
                 nconf.set('db:groups', groups);
@@ -461,7 +460,7 @@ exports.manageGroup = function (req, res) {
         exports.saveToDisk(5);
         res.send(200);
     } else {
-        log.log(req.body);
+        log.warn(req.body);
         res.send(400);
     }
 };
@@ -472,7 +471,7 @@ exports.manageDash = function (req, res) {
     if (req.body.command && req.body.dashboard) {
 
         var dash = req.body.dashboard;
-        log.log(req.body);
+        log.debug(req.body);
 
         switch (req.body.command) {
 
@@ -487,13 +486,13 @@ exports.manageDash = function (req, res) {
                         dashboards[i].groups = dash.groups;
                     }
                 }
-                log.log(dash);
+                log.debug(dash);
                 nconf.set('db:dashboards', dashboards);
                 break;
 
             case 'DELETE':
 
-                log.log("Deleting Dashboard");
+                log.debug("Deleting Dashboard");
                 var found = dashboards.length;
                 for (var i = 0; i < dashboards.length; i++) {
 
@@ -502,7 +501,7 @@ exports.manageDash = function (req, res) {
                     }
                 }
                 if (found < dashboards.length) {
-                    log.log("Deleting 1");
+                    log.debug("Deleting 1");
                     dashboards.splice(found, 1);
                 }
                 nconf.set('db:dashboards', dashboards);
@@ -524,7 +523,7 @@ exports.manageDash = function (req, res) {
         exports.saveToDisk(5);
         res.send(200);
     } else {
-        log.log(req.body);
+        log.debug(req.body);
         res.send(400);
     }
 
@@ -554,7 +553,7 @@ exports.saveToDisk = function saveToDisk (count) {
     {
         if (count == 5)
         {
-            log.log("Force Saving data to disk " + (new Date).toLocaleString());
+            log.warn("Force Saving data to disk");
         }
 
         nconf.set('lock', true);
@@ -563,9 +562,9 @@ exports.saveToDisk = function saveToDisk (count) {
 
             nconf.save(function(err) { // then data
                 if (err) {
-                    log.log(err);
+                    log.error(err);
                 }
-                log.log("Saved successfully %s", (new Date()).toLocaleString());
+                log.log("Saved successfully");
                 nconf.set('lock', false);
             });
 
@@ -596,12 +595,12 @@ exports.saveToDisk = function saveToDisk (count) {
                 {
                     if (temp[0].time <= (new Date().getTime() - 3600000))
                     {
-                        // log.log("Sending to archive");
+                        log.debug("Sending to archive");
                         var newArch = {
                             server: servers[i].server,
                             point: servers[i].data.shift()
                         };
-                        // log.log("Sending to archive: %j", newArch);
+                        log.debug("Sending to archive: %j", newArch);
                         toArchive.push(newArch);
 
                     } else {
@@ -627,12 +626,12 @@ exports.saveToDisk = function saveToDisk (count) {
 
         if (toArchive.length > 0) {
             log.log("Archiving %d objects", toArchive.length);
-            log.log("Archiving: %j", toArchive);
+            log.debug("Archiving: %j", toArchive);
             archiveData(nconf.get('archive'), toArchive, cb);
         } else if (cb) {
             cb();
         } else {
-            log.log("Should not happen ever");
+            log.error("Should not happen ever");
         }
     };
 };
@@ -648,7 +647,7 @@ exports.getArchive = function (req, res) {
 
 function archiveData(archiveServers, toArchive, cb) {
 
-    // log.log("archive data");
+    log.debug("archive data");
     if (!toArchive || toArchive.length === 0 || !archiveServers || archiveServers.length == undefined || archiveServers.length === 0) {
 
         log.warn("ArchiveData failed because the variables were not ready");
@@ -657,8 +656,8 @@ function archiveData(archiveServers, toArchive, cb) {
 
     } else {
 
-        log.log("Length: " + archiveServers.length);
-        log.log("Incoming: %j", toArchive);
+        log.debug("Length: " + archiveServers.length);
+        log.debug("Incoming: %j", toArchive);
         var a = 0;
         var b = 0;
 
@@ -667,7 +666,7 @@ function archiveData(archiveServers, toArchive, cb) {
            function (archivedServer, next) {
 
                var found = [];
-               log.log("%s :: %s", (new Date()).toLocaleString(), archivedServer.server);
+               log.debug("%s :: %s", (new Date()).toLocaleString(), archivedServer.server);
 
                for (var j = 0; j < toArchive.length; j++)
                {
@@ -675,7 +674,7 @@ function archiveData(archiveServers, toArchive, cb) {
 
                        archivedServer.data.push(toArchive[j].point);
 
-                       log.log("Archived len=%d: " + archivedServer.server.toLowerCase() + " vs toArchive (%d): " + toArchive[j].server.toLowerCase() + " succeeded", archivedServer.data.length, j);
+                       log.debug("Archived len=%d: " + archivedServer.server.toLowerCase() + " vs toArchive (%d): " + toArchive[j].server.toLowerCase() + " succeeded", archivedServer.data.length, j);
                        a++;
 
                        found.unshift(j);
@@ -684,12 +683,12 @@ function archiveData(archiveServers, toArchive, cb) {
                if (found.length >= 0) { // was found
                    // This accounts for multiple archives added from the same host.
 
-                   log.log("%s :: Before found Archive Length: %d",(new Date()).toLocaleString(), toArchive.length);
-                   log.log("Found: %j", found);
+                   log.debug("%s :: Before found Archive Length: %d",(new Date()).toLocaleString(), toArchive.length);
+                   log.debug("Found: %j", found);
                    for (var h = 0; h < found.length; h++)
                    {
                        toArchive.splice(found[h], 1); // splice works on the archive
-                       log.log("After splice Archive Length: %d", toArchive.length);
+                       log.debug("After splice Archive Length: %d", toArchive.length);
                        b++;
                    }
                    setImmediate( function () {
@@ -746,14 +745,14 @@ function combineNewServers(toArchive) {
             for (var j = 0; j < ret.length; j++) {
 
                 if (ret[j].server.toLowerCase() == toArchive[i].server.toLowerCase()) {
-                    log.log("Combining data points to server " + ret[j].server);
+                    log.debug("Combining data points to server " + ret[j].server);
                     ret[j].data.push(toArchive[i].point);
                     found = j;
                 }
             }
             if (found === -1) {
 
-                log.log('Combining new server ' + toArchive[i].server);
+                log.debug('Combining new server ' + toArchive[i].server);
                 ret.push({
                      server: toArchive[i].server,
                      data: [ toArchive[i].point ]
@@ -911,12 +910,12 @@ function updateServerData(server) {
 
         if (server.server.toLowerCase() == servers[i].server.toLowerCase()) {
 
-            log.log("updateServer found server");
+            log.debug("updateServer found server");
 
             if (server.group !== undefined && server.group !== null && isNaN(server.group) === false)
             {
                 servers[i].group = server.group;
-                log.log("Changed server(" + server.server + ") to " + server.group);
+                log.debug("Changed server(" + server.server + ") to " + server.group);
             }
         }
     }
