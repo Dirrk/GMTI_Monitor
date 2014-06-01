@@ -11,6 +11,6 @@
     "less-middleware": "~0.1.15",
     "nconf": "*",
     "async": "*",
-    "easy-logger": "0.0.1"
+    "easy-logger": "0.0.3"
   }
 }
