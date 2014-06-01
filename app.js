@@ -50,9 +50,17 @@ if (cluster.isMaster)
 else {
 
 
+    var settings = require('./settings.json') || {
+        "dataDirectory": "./public/data/",
+        "dataFile": "data.json",
+        "archiveFolder": "./public/data/",
+        "tempArchiveLength": 5,
+        "archiveDays": 14,
+        "loglevel": 2
+    };
 
     var easylogger = require('easy-logger');
-    var log = easylogger.startGlobal({ level: 2 });
+    var log = easylogger.startGlobal(settings.loglevel);
 
     log.log("Attempting to start slave process pid: %d", process.pid);
 
@@ -61,16 +69,10 @@ else {
     var path = require('path');
     var nconf = require('nconf');
     var async = require('async');
-    nconf.add('data', {type: 'file', file: './public/data/data.json', loadSync: true });
+    nconf.add('data', {type: 'file', file: settings.dataDirectory + settings.dataFile, loadSync: true });
     nconf.use('data').set('lock', false);
 
-    var settings = require('./settings.json') || {
-        "dataDirectory": "./public/data/",
-        "dataFile": "data.json",
-        "archiveFolder": "./public/data/",
-        "tempArchiveLength": 2,
-        "archiveDays": 14
-    };
+
 
     startSlave();
 

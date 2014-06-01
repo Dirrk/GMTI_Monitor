@@ -4,5 +4,6 @@
     "dataFile": "data.json",
     "archiveFolder": "./public/data/",
     "tempArchiveLength": 5,
-    "archiveDays": 14
+    "archiveDays": 14,
+    "loglevel": 2
 }
