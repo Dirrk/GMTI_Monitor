@@ -93,11 +93,11 @@ function loadDashIndex(front, res) {
         }
         res.render('dashIndex', data);
     } catch (e) {
-        console.log(e);
+        log.log(e);
         try {
             res.send(500);
         } catch (ignore) {
-            console.log("WARN: loadDashIndex Already sent cannot resend");
+            log.log("WARN: loadDashIndex Already sent cannot resend");
         }
     }
 
@@ -117,11 +117,11 @@ function loadDashboard(front, dashboard, res) {
         res.render('dashboard', data);
 
     } catch (e) {
-        console.log(e);
+        log.log(e);
         try {
             res.send(500);
         } catch (ignore) {
-            console.log("WARN: loadDashboard Already sent cannot resend");
+            log.log("WARN: loadDashboard Already sent cannot resend");
         }
     }
 

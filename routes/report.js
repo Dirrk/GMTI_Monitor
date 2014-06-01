@@ -4,6 +4,7 @@
 
 var nconf = require('nconf').use('data');
 var util = require('util');
+var log = require('easy-logger').logger();
 
 exports.report = function(req, res) {
 
@@ -29,7 +30,7 @@ exports.report = function(req, res) {
 
         } catch (e) {
 
-            console.log(e);
+            log.log(e);
             res.send(500, "Invalid date request");
             return;
         }
@@ -47,7 +48,7 @@ exports.report = function(req, res) {
     }
 
 
-    console.log("Starting report for: " + numStart + " - " + numEnd);
+    log.log("Starting report for: " + numStart + " - " + numEnd);
 
     var reportData = [];
     var servers = combinedServers(req.body);
@@ -62,10 +63,10 @@ exports.report = function(req, res) {
 
             if (servers[i].data[j].time >= numStart && servers[i].data[j].time < numEnd)
             {
-                // console.log("Adding data");
+                // log.log("Adding data");
                 reportData[i].data.push(servers[i].data[j]);
             } else {
-                // console.log("Invalid time: " + servers[i].data[j].time);
+                // log.log("Invalid time: " + servers[i].data[j].time);
             }
         }
     }
@@ -121,15 +122,15 @@ exports.report = function(req, res) {
 
     if (req.param('json') == 1)
     {
-        console.log("Output: %j", output.data);
+        log.log("Output: %j", output.data);
         try {
             res.json(output);
         } catch (e) {
-            console.log(e);
+            log.log(e);
             try {
                 res.send(500);
             } catch (ignore) {
-                console.log("Couldn't send 500 it was already sent");
+                log.log("Couldn't send 500 it was already sent");
             }
         }
 
@@ -156,7 +157,7 @@ function sortServers(servers) {
 
 function combinedServers(body) {
 
-    console.log("POST Report: %j", body);
+    log.log("POST Report: %j", body);
 
     if (body && body.servers && body.servers.length > 0)
     {
@@ -171,8 +172,8 @@ function combinedServers(body) {
                 if (archived[i].server == body.servers[j]) {
 
                     ret.push(archived[i]);
-                    // console.log("Found: " + archived[i].server);
-                    // console.log(util.inspect(archived[i].data));
+                    // log.log("Found: " + archived[i].server);
+                    // log.log(util.inspect(archived[i].data));
 
                 }
             }
@@ -183,11 +184,11 @@ function combinedServers(body) {
 
     } else if (body && body.start && body.end) {
 
-        // console.log("Archive request");
+        // log.log("Archive request");
         return nconf.get('archive');
 
     } else {
-        // console.log("Current request");
+        // log.log("Current request");
         var current = nconf.get('servers');
         return current;
     }
