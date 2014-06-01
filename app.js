@@ -52,7 +52,7 @@ else {
 
 
     var easylogger = require('easy-logger');
-    var log = easylogger.startGlobal({ level: 3 });
+    var log = easylogger.startGlobal({ level: 2 });
 
     log.log("Attempting to start slave process pid: %d", process.pid);
 
