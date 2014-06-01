@@ -1,0 +1,74 @@
+//
+   Created by Dirrk on 5/25/2014.
+
+html
+head
+    //
+        link(rel='shortcut icon', href='../../assets/ico/favicon.ico')
+    title Custom Reports
+    //
+       Bootstrap core CSS
+    link(href='/bootstrap/css/bootstrap.min.css', rel='stylesheet')
+    link(href='/chosen/chosen.css', rel='stylesheet')
+    link(href='/datetime/jquery.datetimepicker.css', rel='stylesheet')
+    link(href='/stylesheets/dashboard.css', rel='stylesheet')
+
+
+    body
+        .navbar.navbar-inverse.navbar-static-top(role='navigation')
+            .container-fluid
+                .navbar-header
+                    a.navbar-brand(href='/', style="color: #00B7FF;") GMTI
+                .navbar-collapse.collapse
+                    ul.nav.navbar-nav.navbar-right
+                        li
+                            a(href='/') Dashboards
+                        li
+                            a(href='/manage') Manage
+        .container-fluid.main
+            .row
+                .col-md-6.col-xs-12
+                    #multi-select-servers(style='width: 100%; min-height: 50px;')
+                        label Servers
+                        select#servers-chosen.chosen-container.chosen-container-single.chosen-with-drop.chosen-container-active.input-lg(style='width: 100%', multiple, data-placeholder="Choose servers...")
+                            for server in servers
+                                option(value="#{server.server}") #{server.server}
+                .col-md-6.col-xs-12
+                    label Date Range:
+                    .row#dateRange
+                        .col-md-6.col-xs-12
+                            .input-group
+                                input#startDate.form-control(type='text')
+                                span.input-group-addon.glyphicon.glyphicon-calendar
+                        .col-md-6.col-xs-12
+                            .input-group
+                                input#endDate.form-control(type='text')
+                                span.input-group-addon.glyphicon.glyphicon-calendar
+                    .row#dataAndStart
+                        .col-xs-12
+                            label Data Type
+                        .col-xs-9
+                            select#dataType-chosen.chosen-container.chosen-container-single.chosen-with-drop.chosen-container-active.input-lg(style='width: 100%', multiple, data-placeholder="Choose data point...")
+                                for type in dataTypes
+                                    option(value="#{type.id}") #{type.name}
+                        col-xs-2.col-xs-offset-1
+                            button#genButton.btn.btn-default(type='button') Generate&nbsp
+                                span.glyphicon.glyphicon-play
+        #timechart.container-fluid
+
+
+        script(src='https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js')
+        script(src='/bootstrap/js/bootstrap.min.js')
+        script(src='/chosen/chosen.jquery.min.js')
+        script(src='/datetime/jquery.datetimepicker.js')
+        script(src='/javascripts/flot/jquery.flot.min.js')
+        script(src='/javascripts/flot/jquery.flot.navigate.min.js')
+        script(src='/javascripts/flot/jquery.flot.selection.min.js')
+        script(src='/javascripts/flot/jquery.flot.orderBars.js')
+        script(src='/javascripts/flot/jquery.flot.time.min.js')
+        script(src='/javascripts/flot/jquery.flot.tooltip.min.js')
+        script(src='/javascripts/flotWidgets.js')
+        script(src='/javascripts/customdash.js')
+
+
+
