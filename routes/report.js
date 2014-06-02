@@ -229,7 +229,7 @@ exports.customReport = function(req, res) {
     var servers = nconf.get('db:servers');
 
     res.render('dashboard2', {
-        servers: servers,
+        servers: sortServers(servers),
         dataTypes: nconf.get('db:dataTypes')
     });
 

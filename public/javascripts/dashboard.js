@@ -94,7 +94,8 @@ function safeHandler(dataId) {
 
                 console.log("inside load if of loadData");
 
-                currentDataPoints = inData.servers;
+                currentDataPoints = sortServers(inData.servers);
+
                 currentGroups = inData.groups || [];
 
                 console.log("Mid: " + new Date().getTime());
@@ -139,7 +140,7 @@ function safeHandler(dataId) {
             {
                 if (previousPoint != item.dataIndex && item.dataIndex < currentDataPoints.length)
                 {
-                    var server = currentDataPoints[item.dataIndex];
+                    var server = sortServers(currentDataPoints)[item.dataIndex];
 
                     var text = $("#flotTip").text();
                     $("#flotTip").text(server.server + ": " + text);
@@ -187,6 +188,7 @@ function safeHandler(dataId) {
 
             for (var i = 0; i < input.length;i++)
             {
+                console.log("Server: " + input[i].server);
 
                 var server = {
                     server: input[i].server,
@@ -196,7 +198,13 @@ function safeHandler(dataId) {
                 {
                     cpuBars.data.push([i, server.data[server.data.length - 1].cpu]);
                     memBars.data.push([i, server.data[server.data.length - 1].mem]);
-                    ticks.push([i, server.server]);
+                    var tick = 'null';
+                    if (server.server && server.server.length > 4)
+                    {
+                        tick = server.server.substring((server.server.length - 4));
+                    }
+
+                    ticks.push([i, tick]);
                 } // else discard
             }
         }
@@ -242,7 +250,7 @@ function safeHandler(dataId) {
 
         if (item.dataIndex < currentDataPoints.length)
         {
-            var server = currentDataPoints[item.dataIndex];
+            var server = sortServers(currentDataPoints)[item.dataIndex];
 
             // #drillDownHolder
             $("#drilldownModal").show();
@@ -711,9 +719,11 @@ function safeHandler(dataId) {
 
     function getIdByName(name) {
 
-        for(var i = 0; i < currentDataPoints.length; i++)
+        var temp = sortServers(currentDataPoints);
+
+        for(var i = 0; i < temp.length; i++)
         {
-            if (currentDataPoints[i].server == name)
+            if (temp[i].server == name)
             {
                 console.log("i:" + i);
                 return i;
@@ -862,6 +872,21 @@ function safeHandler(dataId) {
     }, 1800000);
 
 };
+
+function sortServers(servers) {
+
+    return servers.sort(function (a, b) { // sort before saving
+        if (a.server < b.server)
+        {
+            return -1;
+        } else if (a.server > b.server) {
+            return 1;
+        } else {
+            return 0;
+        }
+
+    });
+}
 
 /*
 

@@ -3,7 +3,10 @@
   border-radius: 15px;
 }
 #cpubar .flot-x-axis .flot-tick-label {
-  color: #282828;
+  color: white;
+  padding-top: 3px;
+  font-weight: bold;
+  -webkit-transform: rotate(-45deg);
 }
 #topUsage td:last-child {
   text-align: right;
