@@ -648,7 +648,7 @@ exports.getArchive = function (req, res) {
 function archiveData(archiveServers, toArchive, cb) {
 
     log.debug("archive data");
-    if (!toArchive || toArchive.length === 0 || !archiveServers || archiveServers.length == undefined || archiveServers.length === 0) {
+    if (!toArchive || toArchive.length === 0 || !archiveServers || archiveServers.length === undefined || archiveServers.length === null) {
 
         log.warn("ArchiveData failed because the variables were not ready");
         cb();
