@@ -82,3 +82,10 @@
     width: 95%;
     height: 350px;
 }
+#timeSelection
+{
+    left: 20px;
+    top: -20px;
+    margin-left: auto;
+    margin-right: auto;
+}

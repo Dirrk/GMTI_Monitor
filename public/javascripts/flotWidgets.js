@@ -6,12 +6,12 @@ var FlotHelper = function () {
 
     var self = this;
 
-    self.loadMultiServerTimeGraph = function(elementId, data, dataTypes) {
+    self.loadMultiServerTimeGraph = function(elementId, data, dataTypes, range) {
 
         var plotData = [];
         console.log("data.length: " + data.length);
-        var xRangeStart = 0;
-        var xRangeEnd = 0;
+        var xRangeStart = range.start;
+        var xRangeEnd = range.end;
         for(var i = 0; i < data.length; i++)
         {
             // cpu line for this group
@@ -20,20 +20,16 @@ var FlotHelper = function () {
                 var aLine = {
                     label: dataTypes[h] + " " + data[i].server,
                     data: []
-
                 };
 
                 for (var j = 0; j < data[i].data.length; j++)
                 {
-                    if (xRangeStart === 0 || xRangeStart > data[i].data[j].time) {
-                        xRangeStart = data[i].data[j].time;
+                    if (data[i].data[j].time >= xRangeStart && data[i].data[j].time <= xRangeEnd)
+                    {
+                        aLine.data.push([data[i].data[j].time, data[i].data[j][dataTypes[h]]]);
                     }
-                    if (xRangeEnd === 0 || xRangeEnd < data[i].data[j].time) {
-                        xRangeEnd = data[i].data[j].time;
-                    }
-                    aLine.data.push([data[i].data[j].time, data[i].data[j][dataTypes[h]]]);
 
-                   /* cpuLine.data.push([data[i].data[j].time, data[i].data[j].cpu]);
+                    /* cpuLine.data.push([data[i].data[j].time, data[i].data[j].cpu]);
                     memLine.data.push([data[i].data[j].time, data[i].data[j].mem]);*/
                 }
                 plotData.push(aLine);
@@ -70,6 +66,11 @@ var FlotHelper = function () {
 
         var options = {
 
+            series: {
+                downsample: {
+                    threshold: Math.ceil($(elementId).width() / 2) // 0 disables downsampling for this series.
+                }
+            },
            zoom: {
              interactive: true
            },
@@ -86,15 +87,14 @@ var FlotHelper = function () {
             xaxis: {
                 mode: "time",
                 timezone: "browser",
-                timeformat: "%H:%M:%S",
+                timeformat: "%d %H:%M",
                 zoomRange: [xRangeStart, xRangeEnd]
 
             },
             yaxis: {
                 min: 0,
                 max: 100,
-                tickSize: 20,
-                zoomRange: [0,100]
+                tickSize: 20
             },
             lines: {
                 show: true

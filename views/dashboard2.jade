@@ -12,6 +12,7 @@ head
     link(href='/chosen/chosen.css', rel='stylesheet')
     link(href='/datetime/jquery.datetimepicker.css', rel='stylesheet')
     link(href='/stylesheets/dashboard.css', rel='stylesheet')
+    link(href='/jqdate/css/iThing-min.css', rel='stylesheet')
 
 
     body
@@ -55,6 +56,12 @@ head
                             button#genButton.btn.btn-default(type='button') Generate&nbsp
                                 span.glyphicon.glyphicon-play
         #timechart.container-fluid
+        #timeSelection.container-fluid
+
+
+
+
+
 
 
         script(src='/javascripts/flot/jquery.min.js')
@@ -67,6 +74,9 @@ head
         script(src='/javascripts/flot/jquery.flot.orderBars.js')
         script(src='/javascripts/flot/jquery.flot.time.min.js')
         script(src='/javascripts/flot/jquery.flot.tooltip.min.js')
+        script(src='/javascripts/flot/jquery.flot.downsample.js')
+        script(src='/javascripts/jquery-ui-1.10.4.min.js')
+        script(src='/jqdate/JQDateRangeSlider-min.js')
         script(src='/javascripts/flotWidgets.js')
         script(src='/javascripts/customdash.js')
 
