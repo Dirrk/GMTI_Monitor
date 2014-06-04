@@ -63,12 +63,15 @@ var FlotHelper = function () {
         }
 
         console.log(plotData);
+        var thresh = 2;
+        thresh += data.length;
+
 
         var options = {
 
             series: {
                 downsample: {
-                    threshold: Math.ceil($(elementId).width() / 2) // 0 disables downsampling for this series.
+                    threshold: Math.ceil($(elementId).width() / thresh) // 0 disables downsampling for this series.
                 }
             },
            zoom: {
