@@ -53,29 +53,30 @@ $("#genButton").click(function() {
         fl.loadMultiServerTimeGraph("#timechart", _data, dataTypes, { start: startDate, end: endDate});
         // #timechart
 
-        $("#timeSelection").dateRangeSlider({
-
-                                                bounds: {
-                                                    min: new Date(startDate),
-                                                    max: new Date(endDate)
-                                                },
-                                                step: {
-                                                    minutes: 1
-                                                },
-                                                defaultValues:{
-                                                    min: new Date(startDate),
-                                                    max: new Date(endDate)
-                                                },
-                                                valueLabels: "change",
-                                                arrows:false,
-                                                formatter:  function(val){
-                                                    var days = val.getDate(),
-                                                        month = val.getMonth() + 1,
-                                                        hour = val.getHours(),
-                                                        minute = val.getMinutes();
-                                                    return month + "/" + days + " - " + hour + ":" + minute;
-                                                }
-                                            });
+        $("#timeSelection").dateRangeSlider(
+            {
+                bounds: {
+                    min: new Date(startDate),
+                    max: new Date(endDate)
+                },
+                step: {
+                    minutes: 1
+                },
+                defaultValues:{
+                    min: new Date(startDate),
+                    max: new Date(endDate)
+                },
+                valueLabels: "change",
+                arrows:false,
+                formatter:  function(val){
+                    var days = val.getDate(),
+                        month = val.getMonth() + 1,
+                        hour = val.getHours(),
+                        minute = val.getMinutes();
+                    return month + "/" + days + " - " + hour + ":" + minute;
+                }
+            }
+        );
 
         $("#timeSelection").bind("userValuesChanged", function(e, vals){
 

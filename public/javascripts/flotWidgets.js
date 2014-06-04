@@ -90,7 +90,7 @@ var FlotHelper = function () {
             xaxis: {
                 mode: "time",
                 timezone: "browser",
-                timeformat: "%d %H:%M",
+                timeformat: "%m/%d - %H:%M",
                 zoomRange: [xRangeStart, xRangeEnd]
 
             },

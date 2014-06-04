@@ -78,10 +78,10 @@ function safeHandler(dataId) {
      */
 
      // run at start
-    loadData();
+    loadData(true);
 
 
-    function loadData() {
+    function loadData(firstRun) {
 
         console.log("Start: " + new Date().getTime());
 
@@ -101,7 +101,10 @@ function safeHandler(dataId) {
                 console.log("Mid: " + new Date().getTime());
 
                 loadBarUI(currentDataPoints);
-                loadGaugesUI(currentDataPoints);
+                // loadGaugesUI(currentDataPoints);
+                if (firstRun === true) {
+                    loadGaugesUI2(currentDataPoints);
+                }
                 loadSortUI(currentDataPoints);
                 loadGroupsAverageTimeGraph(currentDataPoints, currentGroups);
                 $(".currentTime").text(new Date().toLocaleString());
@@ -324,6 +327,44 @@ function safeHandler(dataId) {
             options: options
         };
     };
+
+    function loadGaugesUI2() {
+
+        var averages = getAverages(currentDataPoints);
+
+        // cpu data
+        var cpuGauge = new JustGage(
+            {
+                id:    "cpuGauge",
+                value: averages.cpu,
+                min:   0,
+                max:   100,
+                valueFontColor: CPU_COLOR,
+                title: "Average CPU"
+            }
+        );
+        cpuGauge._dataType = 'cpu';
+        var memGauge = new JustGage(
+            {
+                id:    "memGauge",
+                value: averages.mem,
+                min:   0,
+                max:   100,
+                valueFontColor: MEM_COLOR,
+                title: "Memory"
+            }
+        );
+        memGauge._dataType = 'mem';
+        function refreshMe(data) {
+
+            cpuGauge.refresh(data.cpu);
+            memGauge.refresh(data.mem);
+
+        }
+        setTimeout(function() {
+            refreshMe(getAverages(currentDataPoints));
+        }, 30000);
+    }
 
     /**
      * Gauges UI Controller

@@ -38,8 +38,9 @@ block append content
     #flot-container
         #cpubar.flotFullWShortH
         #line2
-            #cpuGauge.flotGauge
-            #memGauge.flotGauge
+            .stackedGauges
+                #cpuGauge
+                #memGauge
             #topUsage.flotGauge(style="width: 200px;", ng-app="usageApp", ng-controller="usageCntrl")
                 #cpu
                     table
@@ -87,6 +88,9 @@ block append scripts
     script(type='text/javascript', src='/javascripts/flot/jquery.flot.time.min.js')
     script(type='text/javascript', src='/javascripts/flot/jquery.flot.navigate.min.js')
     script(type='text/javascript', src='/javascripts/flot/jquery.flot.selection.min.js')
+    script(type='text/javascript', src="/javascripts/raphael.2.1.2.min.js")
+    script(type='text/javascript', src="/javascripts/justgage.js")
+    script(src='/javascripts/flot/jquery.flot.downsample.js')
     script(type='text/javascript', src='/javascripts/angular.js')
     script(type='text/javascript', src='/javascripts/dashboard.js')
 
