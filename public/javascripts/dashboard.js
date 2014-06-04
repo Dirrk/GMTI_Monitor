@@ -171,8 +171,8 @@ function safeHandler(dataId) {
             bars: {
                 show: true,
                 align: 'center',
-                barWidth:.25,
-                order: 1
+                barWidth:.8/*,
+                order: 1*/
             }
         };
        var memBars = {
@@ -182,8 +182,8 @@ function safeHandler(dataId) {
            bars: {
                show: true,
                align: 'center',
-               barWidth:.25,
-               order: 2
+               barWidth:.8/*,
+               order: 2*/
            }
        };
         var ticks = [];
@@ -853,6 +853,11 @@ function safeHandler(dataId) {
 
         var options = {
 
+            series: {
+                downsample: {
+                    threshold: 500 // 0 disables downsampling for this series.
+                }
+            },
             grid: {
                 hoverable: true,
                 clickable: true
