@@ -941,6 +941,12 @@ function safeHandler(dataId) {
 
 };
 
+$("#pickFormat").change(function () {
+    var newUrl = (document.URL).toString().split('?')[0];
+    newUrl = newUrl + '?view=' + $("#pickFormat").val();
+    document.location.href=newUrl;
+});
+
 function sortServers(servers) {
 
     return servers.sort(function (a, b) { // sort before saving
@@ -956,6 +962,7 @@ function sortServers(servers) {
     });
 }
 
+$()
 
 /*
 
