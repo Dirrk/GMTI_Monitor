@@ -5,5 +5,6 @@
     "archiveFolder": "./public/data/",
     "tempArchiveLength": 5,
     "archiveDays": 14,
-    "loglevel": 2
+    "loglevel": 1,
+    "dev": true
 }

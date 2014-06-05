@@ -4,6 +4,7 @@
 
 var nconf = require('nconf');
 var util = require('util');
+var log = require('easy-logger').logger();
 /*
 //      * moc dashboards
 app.get('/moc', dashboard.mocIndex);
@@ -18,12 +19,14 @@ app.get('/phx/:id', dashboard.phxDashboard);
 exports.indexed = function (req, res) {
 
     // either load a front / dashboard or 404
-    var url = req.url.toLowerCase();
+    var url = req.url.toLowerCase().split('?')[0];
 
-
+    log.info(url);
     var front = getFrontByURL(url);
 
+
     if (front !== null) {
+
 
         if (url.lastIndexOf('/') === 0) // at a front
         {
@@ -36,7 +39,7 @@ exports.indexed = function (req, res) {
             var dashboard = getDashboardById(dashId);
             if (dashboard !== null) {
 
-                loadDashboard(front, dashboard, res);
+                loadDashboard(front, dashboard, res, req.param('view'));
 
             } else {
 
@@ -103,16 +106,18 @@ function loadDashIndex(front, res) {
 
 };
 
-function loadDashboard(front, dashboard, res) {
+function loadDashboard(front, dashboard, res, params) {
 
     try {
 
         var data = {
 
             front: front,
-            dashboard: dashboard
+            dashboard: dashboard,
+            barFormat: params || 'stack'
 
         };
+        log.info(params);
 
         res.render('dashboard', data);
 

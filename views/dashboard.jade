@@ -32,11 +32,29 @@ block append content
         #title
             h2 #{dashboard.description}
             #settingsBox
-                select#pickFormat(value="#{barFormat}")
-                    option(value="stack") Stacked Bar
-                    option(value="side") Multi Bar
-                    option(value="cpu") CPU Only
-                    option(value="mem") Memory Only
+                //
+                    #{barFormat}
+                select#pickFormat
+                    if (barFormat == 'stack')
+                        option(value="stack", selected) Stacked Bar
+                    else
+                        option(value="stack") Stacked Bar
+
+                    if (barFormat == 'side')
+                        option(value="side", selected) Multi Bar
+                    else
+                        option(value="side") Multi Bar
+
+                    if (barFormat == 'cpu')
+                        option(value="cpu", selected) CPU View
+                    else
+                        option(value="cpu") CPU View
+
+                    if (barFormat == 'mem')
+                        option(value="mem", selected) Memory View
+                    else
+                        option(value="mem") Memory View
+
     else
         #title
             h2 Description

@@ -16,7 +16,8 @@ var settings = require('./settings.json') || {
     "archiveFolder": "./public/data/",
     "tempArchiveLength": 5,
     "archiveDays": 14,
-    "loglevel": 2
+    "loglevel": 1,
+    "dev": true
 };
 
 var easylogger = require('easy-logger');
@@ -50,10 +51,15 @@ function startSlave() {
         if (val === true) {
 
             log.debug("Attempting to clean archive storage");
-            cleanUpArchive(function () {
-                log.debug("Successfully cleaned archive storage");
+            if (settings.dev != true) {
+                cleanUpArchive(function () {
+                    log.debug("Successfully cleaned archive storage");
+                    strictWrapper();
+                });
+            } else {
                 strictWrapper();
-            });
+            }
+
         }
     });
 };
