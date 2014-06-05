@@ -114,7 +114,7 @@ function loadDashboard(front, dashboard, res, params) {
 
             front: front,
             dashboard: dashboard,
-            barFormat: params || 'stack'
+            barFormat: params || front.barFormat || 'cpu'
 
         };
         log.info(params);
