@@ -118,3 +118,11 @@
   height: 350px;
   display: inline-block;
 }
+#title h2 {
+  display: inline;
+}
+#settingsBox {
+  display: inline;
+  float: right;
+  margin-right: 2.5%;
+}

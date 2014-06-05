@@ -164,6 +164,9 @@ function safeHandler(dataId) {
      * @returns { data, options }
      */
     function loadBarData(input) {
+
+        var barView = $("#pickFormat").val();
+
         var cpuBars = {
             data: [],
             color: CPU_COLOR,
@@ -171,10 +174,10 @@ function safeHandler(dataId) {
             bars: {
                 show: true,
                 align: 'center',
-                barWidth:.8/*,
-                order: 1*/
+                barWidth:.8
             }
         };
+
        var memBars = {
            data: [],
            color: MEM_COLOR,
@@ -182,10 +185,30 @@ function safeHandler(dataId) {
            bars: {
                show: true,
                align: 'center',
-               barWidth:.8/*,
-               order: 2*/
+               barWidth:.8
            }
        };
+
+        if (barView == 'cpu') {
+            memBars.bars.show = false;
+            memBars.lines = {
+                lineWidth: 3.25
+            };
+        } else if (barView == 'mem') {
+            cpuBars.bars.show = false;
+            cpuBars.lines = {
+                lineWidth: 3.25
+            };
+        } else if (barView == 'side') {
+            cpuBars.bars.order = 1;
+            memBars.bars.order = 2;
+            cpuBars.bars.barWidth = .25;
+            memBars.bars.barWidth = .25;
+        } else if (barView == 'stack') {
+            cpuBars.bars.barWidth = .8;
+            memBars.bars.barWidth = .8;
+        }
+
         var ticks = [];
         if (input != undefined) {
 
@@ -892,7 +915,6 @@ function safeHandler(dataId) {
     }
 
 
-
     $.external_callLoadDrillDown = function (serverName) {
 
         var id = getIdByName(serverName);
@@ -933,6 +955,7 @@ function sortServers(servers) {
 
     });
 }
+
 
 /*
 

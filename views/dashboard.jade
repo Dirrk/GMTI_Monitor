@@ -31,9 +31,16 @@ block append content
     if (dashboard)
         #title
             h2 #{dashboard.description}
+            #settingsBox
+                select#pickFormat(value="#{barFormat}")
+                    option(value="stack") Stacked Bar
+                    option(value="side") Multi Bar
+                    option(value="cpu") CPU Only
+                    option(value="mem") Memory Only
     else
         #title
             h2 Description
+
 
     #flot-container
         #cpubar.flotFullWShortH
