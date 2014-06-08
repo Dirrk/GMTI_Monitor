@@ -938,7 +938,6 @@ function safeHandler(dataId) {
         location.reload(true);
 
     }, 1800000);
-
 };
 
 $("#pickFormat").change(function () {
