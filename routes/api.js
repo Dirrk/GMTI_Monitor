@@ -13,6 +13,7 @@ var util = require('util');
 var async = require('async');
 var http = require('http');
 var log = require('easy-logger').logger();
+var controller = require('../DataController/controller');
 
 
 /*  API Calls
@@ -40,7 +41,7 @@ var log = require('easy-logger').logger();
  *  To prevent ddos'ing the servers or killing the host server I am going to use async mapLimit to queue up http requests 50 at a time and then measure the time it took to complete all requests and subtract that from 30 seconds and set time out to run again
  *
  *
- */
+
 
 exports.startCollector = function startCollector(time) {
 
@@ -60,7 +61,7 @@ exports.startCollector = function startCollector(time) {
     function go() {
 
         // get Values
-        var servers = nconf.get('db:servers');
+        var servers = controller.current();
         var startTime = new Date().getTime();
 
         async.mapLimit(servers, 50,
@@ -140,7 +141,7 @@ function httpPerformRequest(server, cb) {
     }
 
 }
-
+**/
 
 /**
  * /api/update receives data from servers
@@ -149,7 +150,13 @@ function httpPerformRequest(server, cb) {
  *
  * @param req
  * @param res
+ *
+ * TODO
+ * Priority = LOW
+ * Parse these dynamically based on dataTypes
+ *
  */
+
 exports.update = function(req, res) {
 
     // log.log("Incoming Request: host=" + req.ip + " data=%j", req.body);
@@ -183,60 +190,106 @@ exports.update = function(req, res) {
 
 };
 
+// var test = { "job": 5, "test": 3, "bob": "twenty" };
+// for (var i = 0; i < Object.keys(test).length; i++) { console.log(Object.keys(test)[i]); }
+// for (var i = 0; i < Object.keys(test).length; i++) { console.log(test[Object.keys(test)[i]]); }
+
+exports.update2 = function (req, res) {
+
+    var details = {
+        id: 0,
+        ip: '',
+        hostName: ''
+    };
+    var values = {
+        time: new Date().getTime()
+    };
+
+    var dataTypes = controller.db().dataTypes;
+
+    var keys = Object.keys(req.body);
+    for (var i = 0; i < keys.length; i++)
+    {
+        for (var j = 0; j < dataTypes.length; j++)
+        {
+            if (keys[i] == dataTypes[j].field) {
+                values[dataTypes[j].field] = req.body[keys[i]];
+            }
+        }
+        if (keys[i] == 'server' || keys[i] == 'host') {
+            details.hostName = req.body.server || req.body.host;
+        } else if (keys[i] == 'id') {
+            details.id = req.body.id;
+        }
+    }
+    details.ip = req.ip;
+
+    res.send(200);
+
+    addServerData2(details, values);
+
+};
+
+
+function addServerData2(details, values) {
+
+    values.time = new Date().getTime();
+    details.id = controller.getServerId(details);
+
+    if (details.id != null)
+    {
+        controller.addDataToServer(details.id, values);
+
+    } else {
+
+        controller.addServer(details, function(newServer) {
+
+            controller.addDataToServer(newServer.id, values);
+
+        });
+    }
+
+};
+
+
 function addServerData(server, cpu, mem) {
 
-    var server = server.split('.')[0];
+    var values = {
+        time: new Date().getTime(),
+        cpu: cpu || 0.00,
+        mem: mem || 0.00
+    };
 
-    var servers = nconf.get('servers'),
-        iterator,
-        found;
+    var details = {
+        hostName: server
+    };
 
-    log.debug("AddServerData: %j", servers);
-    for(iterator = 0, found = servers.length; iterator < servers.length; iterator++)
+    details.id = controller.getServerId(details) || null;
+
+    if (details.id !== null && details.id >= 0)
     {
+        controller.addDataToServer(details.id, values);
 
-        if (servers[iterator].server.toUpperCase() == server.toUpperCase())
-        {
-            found = iterator;
-        }
+    } else {
+
+        controller.addServer(details, function(newServer) {
+
+            controller.addDataToServer(newServer.id, values);
+
+        });
     }
-    if (found === servers.length)
-    {
-        servers.push(
-            {
-                server: server,
-                group: lookUpGroup(server),
-                data: []
-            }
-        );
-    } else if (servers[found].group !== undefined || servers[found].group !== null || servers[found].group < 0) {
-
-        // new server will always have this old servers may not have this data because pre vrc1.3 did not have the group info in data.json
-        servers[found].group = lookUpGroup(server);
-
-    }
-    servers[found].data.push(
-        {
-            time: new Date().getTime(),
-            cpu: cpu || 0.00,
-            mem: mem || 0.00
-        }
-    );
-
-    nconf.set('servers', servers);
-    nconf.set('lock', false);
 };
 
 exports.save = function(req, res) {
     res.send(200);
-    exports.saveToDisk(5);
+    controller.save(5);
 };
 
 exports.reload = function(req, res) {
 
     res.send(200);
 
-    exports.saveToDisk(5);
+    controller.save(5);
 
 
 };
@@ -269,7 +322,7 @@ exports.manageServer = function (req, res) {
                 res.send(400);
                 return;
         }
-        exports.saveToDisk(5);
+        controller.save(5);
         res.send(200);
     } else {
         log.debug(req.body);
@@ -285,6 +338,22 @@ exports.manageServer = function (req, res) {
 
  */
 
+
+exports.data2 = function (req, res) {
+
+    // start time Date.now() - defaultMins * 60000
+    // end time Date.now()
+    // groups []
+    // servers []
+    // dataTypes (cpu, mem)
+    // method (current, avgByGroup, avgByServer, currentAvgByGroup, currentAvgByServer, currentAvg)
+
+
+
+
+
+
+};
 
 // This will do the post request for data where you send certain groups
 exports.data = function (req, res) {
@@ -331,7 +400,6 @@ exports.getData = function (req, res) {
     }
 
 };
-
 
 exports.groups = function (req, res) {
 
@@ -391,7 +459,7 @@ exports.createServer = function (req, res) {
         }
         nconf.set('db:servers', servers.concat(tempServers));
         res.json(tempServers);
-        exports.saveToDisk(5);
+        controller.save(5);
 
 
     } else {
@@ -399,7 +467,6 @@ exports.createServer = function (req, res) {
     }
 
 };
-
 
 exports.manageGroup = function (req, res) {
 
@@ -449,7 +516,7 @@ exports.manageGroup = function (req, res) {
                 }
                 groups.push(group);
                 nconf.set('db:groups', groups);
-                exports.saveToDisk(5);
+                controller.save(5);
                 res.json(group);
 
                 return;
@@ -457,7 +524,7 @@ exports.manageGroup = function (req, res) {
                 res.send(400);
                 return;
         }
-        exports.saveToDisk(5);
+        controller.save(5);
         res.send(200);
     } else {
         log.warn(req.body);
@@ -512,7 +579,7 @@ exports.manageDash = function (req, res) {
 
                 dashboards.push(dash);
                 nconf.set('db:dashboards', dashboards);
-                exports.saveToDisk(5);
+                controller.save(5);
                 res.json(dashboards);
 
                 return;
@@ -520,7 +587,7 @@ exports.manageDash = function (req, res) {
                 res.send(400);
                 return;
         }
-        exports.saveToDisk(5);
+        controller.save(5);
         res.send(200);
     } else {
         log.debug(req.body);
@@ -538,232 +605,13 @@ exports.manageDash = function (req, res) {
  */
 
 
-/**
- *  Save current data to disk
- *
- * @type {saveToDisk}
- * @param count
- */
-exports.saveToDisk = function saveToDisk (count) {
-
-    var count = count || 0;
-    count++;
-
-    if (nconf.get('lock') === false || count >= 5)
-    {
-        if (count == 5)
-        {
-            log.warn("Force Saving data to disk");
-        }
-
-        nconf.set('lock', true);
-
-        cleanUpData(function () {
-
-            nconf.save(function(err) { // then data
-                if (err) {
-                    log.error(err);
-                }
-                log.log("Saved successfully");
-                nconf.set('lock', false);
-            });
-
-        });
-
-    } else {
-        setTimeout(function() {
-            saveToDisk(count);
-        }, Math.floor(Math.random() * 100))
-    }
-
-    function cleanUpData(cb) {
-
-        // if (debug === true) { return };
-
-        var servers = nconf.get('servers');
-        var toRemove = [];
-        var toArchive = [];
-
-        for(var i = 0; i < servers.length; i++)
-        {
-            var temp = servers[i].data;
-            var done = false;
-
-            while (done !== true)
-            {
-                if (temp.length > 0)
-                {
-                    if (temp[0].time <= (new Date().getTime() - 3600000))
-                    {
-                        log.debug("Sending to archive");
-                        var newArch = {
-                            server: servers[i].server,
-                            point: servers[i].data.shift()
-                        };
-                        log.debug("Sending to archive: %j", newArch);
-                        toArchive.push(newArch);
-
-                    } else {
-                        done = true;
-                    }
-
-                } else {
-                    done = true;
-                }
-            }
-            if (servers[i].data.length == 0)
-            {
-                toRemove.unshift(i);
-            }
-
-        }
-        for (var k = 0; k < toRemove.length; k++)
-        {
-            servers.splice(toRemove[k], 1);
-        }
-
-        nconf.set('servers', servers);
-
-        if (toArchive.length > 0) {
-            log.log("Archiving %d objects", toArchive.length);
-            log.debug("Archiving: %j", toArchive);
-            archiveData(nconf.get('archive'), toArchive, cb);
-        } else if (cb) {
-            cb();
-        } else {
-            log.error("Should not happen ever");
-        }
-    };
-};
-
 exports.getArchive = function (req, res) {
 
-
+    res.status(401).send("This is no longer supported");
     var db = nconf.get('archive');
     res.json(db);
 
 };
-
-
-function archiveData(archiveServers, toArchive, cb) {
-
-    log.debug("archive data");
-    if (!toArchive || toArchive.length === 0 || !archiveServers || archiveServers.length === undefined || archiveServers.length === null) {
-
-        log.warn("ArchiveData failed because the variables were not ready");
-        cb();
-        return;
-
-    } else {
-
-        log.debug("Length: " + archiveServers.length);
-        log.debug("Incoming: %j", toArchive);
-        var a = 0;
-        var b = 0;
-
-        async.eachSeries(archiveServers,
-
-           function (archivedServer, next) {
-
-               var found = [];
-               log.debug("%s :: %s", (new Date()).toLocaleString(), archivedServer.server);
-
-               for (var j = 0; j < toArchive.length; j++)
-               {
-                   if (archivedServer.server.toLowerCase() == toArchive[j].server.toLowerCase()) {
-
-                       archivedServer.data.push(toArchive[j].point);
-
-                       log.debug("Archived len=%d: " + archivedServer.server.toLowerCase() + " vs toArchive (%d): " + toArchive[j].server.toLowerCase() + " succeeded", archivedServer.data.length, j);
-                       a++;
-
-                       found.unshift(j);
-                   }
-               }
-               if (found.length >= 0) { // was found
-                   // This accounts for multiple archives added from the same host.
-
-                   log.debug("%s :: Before found Archive Length: %d",(new Date()).toLocaleString(), toArchive.length);
-                   log.debug("Found: %j", found);
-                   for (var h = 0; h < found.length; h++)
-                   {
-                       toArchive.splice(found[h], 1); // splice works on the archive
-                       log.debug("After splice Archive Length: %d", toArchive.length);
-                       b++;
-                   }
-                   setImmediate( function () {
-                       next();
-                   });
-
-               } else {
-                   next();
-               }
-           },
-           function (err) {
-               if (err) { log.warn("Unknown error in each series"); }
-               else {
-
-                   if (a !== b) {
-                       log.warn("%s :: finished A=%d :: B=%d", (new Date()).toLocaleString(), a, b);
-                   }
-
-                   if (toArchive.length > 0)
-                   {
-                       log.warn("Adding new servers to archive: %j", toArchive);
-                       var newCombined = combineNewServers(toArchive);
-
-                       for (var k = 0; k < newCombined.length; k++)
-                       {
-                           archiveServers.push(newCombined[k]);
-                       }
-                   } else {
-                       log.info("No new servers added to archive");
-                   }
-                   log.log("Servers Status: Current %d ::  Archived %d", nconf.get('servers').length, archiveServers.length);
-                   nconf.set('archive', archiveServers);
-                   setImmediate(function () {
-                       cb();
-                   });
-               }
-           }
-        );
-    }
-};
-
-function combineNewServers(toArchive) {
-
-    if (!toArchive || toArchive.length === 0) {
-        log.warn("Tried to combine empty archive");
-        return [];
-    } else {
-
-        var ret = [];
-
-        for (var i = 0; i < toArchive.length; i++)
-        {
-            var found = -1;
-            for (var j = 0; j < ret.length; j++) {
-
-                if (ret[j].server.toLowerCase() == toArchive[i].server.toLowerCase()) {
-                    log.debug("Combining data points to server " + ret[j].server);
-                    ret[j].data.push(toArchive[i].point);
-                    found = j;
-                }
-            }
-            if (found === -1) {
-
-                log.debug('Combining new server ' + toArchive[i].server);
-                ret.push({
-                     server: toArchive[i].server,
-                     data: [ toArchive[i].point ]
-                });
-
-            }
-        }
-        return ret;
-
-    }
-}
 
 function lookUpGroup(serverName) {
 
@@ -881,6 +729,10 @@ function groupArray(arr) {
 
 };
 
+
+// TODO
+// Switch to RESTFul
+// This will just call controller.editServer('delete', id);
 function deleteServerData(server) {
 
     var servers = nconf.get('db:servers');
@@ -902,8 +754,14 @@ function deleteServerData(server) {
     return false;
 };
 
+
+// TODO
+// Change how this works completely
+// 1. Change app to be RESTful (post=create/put=update/get=get/delete=delete)
+// 2. This will just call controller.editServer('update', id, values);
 function updateServerData(server) {
 
+    // var servers = controller.db().servers;
     var servers = nconf.get('db:servers');
     for(var i = 0; i < servers.length; i++)
     {

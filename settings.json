@@ -2,9 +2,27 @@
 
     "dataDirectory": "./public/data/",
     "dataFile": "data.json",
+    "dbFile": "db.json",
     "archiveFolder": "./public/data/",
-    "tempArchiveLength": 5,
+    "archiveFile": "archive.json",
+    "tempArchiveLength": 1,
     "archiveDays": 14,
-    "loglevel": 1,
-    "dev": true
+    "loglevel": 0,
+    "dev": false,
+    "mysql": {
+        "host": "192.168.1.35",
+        "user": "gmtimonitor",
+        "password": "gmtimonitor",
+        "port": 3306,
+        "database": "gmtimonitor",
+        "connectionLimit": 50,
+        "supportBigNumbers": true,
+        "waitForConnections": true
+    },
+    "controller": "legacyArchive",
+    "recognizeByOrder": ["hostname", "ip"],
+    "legacySettings": {
+        "currentLength": 3600000,
+        "currentCleanupFrequency": 120000
+    }
 }

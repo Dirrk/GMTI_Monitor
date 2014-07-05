@@ -158,12 +158,13 @@ function sortServers(servers) {
 function combinedServers(body) {
 
     log.log("POST Report: %j", body);
+    var ret = [];
 
     if (body && body.servers && body.servers.length > 0)
     {
 
         var archived = nconf.get('archive');
-        var ret = [];
+
 
         for (var i = 0; i < archived.length; i++)
         {
@@ -179,7 +180,7 @@ function combinedServers(body) {
             }
         }
 
-        return ret;
+        return actuallyCombine(ret);
 
 
     } else if (body && body.start && body.end) {
@@ -189,8 +190,38 @@ function combinedServers(body) {
 
     } else {
         // log.log("Current request");
-        var current = nconf.get('servers');
-        return current;
+        return nconf.get('servers');
+    }
+
+    function actuallyCombine(aRet) {
+
+        // this isn't perfect
+
+        var curServers = nconf.get('servers');
+        for (var k = 0; k < curServers.length; k++)
+        {
+
+            for (var m = 0; m < aRet.length;m++) {
+
+                if (curServers[k].server == aRet[m].server)
+                {
+
+                    for (var n = 0; n < curServers[k].data.length; n++)
+                    {
+                        aRet[m].data.push(curServers[k].data[n]);
+
+                    }
+                    aRet[m].data = aRet[m].data.sort(function(a, b) {
+                       return a.time - b.time;
+                    });
+                    m = aRet.length;
+                }
+            }
+        }
+
+
+
+        return aRet;
     }
 
 
