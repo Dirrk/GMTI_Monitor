@@ -26,7 +26,7 @@ var util = require('util');
 
 var legacySettings = settings.legacySettings || {};
 
-legacySettings.currentLength = legacySettings.currentLength || 3600000; // 1 hour
+legacySettings.currentLength = legacySettings.currentLength || settings.currentLength || 3600000; // 1 hour
 legacySettings.currentCleanupFrequency = legacySettings.currentCleanupFrequency || 120000; // 2 minutes
 legacySettings.throttleDB = legacySettings.throttleDB || 15000; // 15 seconds
 legacySettings.forceSaveDB = legacySettings.forceSaveDB || 900000; // 15 minutes
@@ -1403,9 +1403,191 @@ function getArchiveFileName(aDate) {
  *
  */
 
-var getData = exports.getData = function getData(options) {
+var getData = exports.getData = function getData(options, currentData, callback) {
+
+    var finalData = currentData || [];
+    var servers = options.servers;
+
+    var options2 = {
+        start: options.startTime,
+        end: options.endTime,
+        servers: servers.filter(function (completed) {
+          for (var i = 0; i < options.completed.length; i++) {
+              if (completed.id == options.completed[i]) {
+                  return false;
+              }
+          }
+          return true;
+        })
+    };
+
+    var jobs = generateDataJobs(options2);
+
+    async.mapSeries(jobs, handleDataJob, function (newData) {
+
+        finalizeDataJobs(options, finalData, newData, callback);
+
+    });
 
 };
+
+function generateDataJobs(options) {
+
+    var ret = [];
+    var rangeFiles = getRangeAndSplitFiles(options.start, options.end);
+
+    for (var i = 0;  i < rangeFiles.length; i++) {
+
+        var aJob = {
+            file: rangeFiles[i].file,
+            start: options.start,
+            end: options.end,
+            servers: options.servers
+        };
+
+        ret.push(aJob);
+    }
+    return ret;
+}
+
+function getRangeAndSplitFiles(startTime, endTime) {
+
+    var aTime = startTime;
+    var eTime = endTime || (new Date().getTime());
+    var ret = [];
+    do {
+
+        ret.push({ file: getArchiveFileName(aTime)});
+        aTime = aTime + 86400000; // add a day to it
+
+    } while (!comparePointDates(aTime, eTime));
+
+    return ret;
+}
+
+function handleDataJob (job, next) {
+
+    readInJSON(job.file, function (data) {
+
+        if (data && data.length > 0) {
+
+           var ret = data.filter(function (dataServer) {
+
+                for (var i = 0; i < job.servers.length;i++) {
+                    if (job.servers[i].id == dataServer.id) {
+                        return true;
+                    }
+                }
+                return false;
+
+            });
+
+            next(null, ret || []);
+
+        } else {
+            next(null, null);
+        }
+    });
+}
+
+
+function finalizeDataJobs(options, currentData, archivedData, cb) {
+
+
+    var start = options.startTime;
+    var end = options.endTime;
+    var dataTypes = getFieldsFromDataTypes(options.dataTypes);
+
+    var combinedData = sortServerById(archivedData.shift());
+
+    while (archivedData.length > 0) {
+        combinedData = sortedMergeServers(combinedData, sortServerById(archivedData.shift()));
+    }
+
+    cb(null, sortedMergeServers(filterDataByTimeAndDataTypes(start, end, dataTypes, combinedData).data), sortServerById(currentData));
+
+}
+
+function filterDataByTimeAndDataTypes(start, end, dataTypes, input) {
+
+
+    var ret = {
+        needMore: false,
+        completedServerIds: [],
+        data: []
+    };
+
+    for (var i = 0; i < input.length; i++) {
+
+        var temp = constrainAndFilterData(sortDataByTime(input[i].data, start, end, dataTypes));
+
+        if (temp.first > 0 || temp.first == input[i].data.length) {
+
+            ret.completedServerIds.push(input[i].id);
+
+        } else {
+            ret.needMore = true;
+        }
+
+        ret.data.push({
+                          id: input[i].data,
+                          data: temp.newData
+                      });
+    }
+    return ret;
+}
+
+function getFieldsFromDataTypes(dataTypes) {
+    return dataTypes.map(function (dataType) {
+        return dataType.field;
+    });
+}
+
+function constrainAndFilterData(timedData, start, end, dataTypes) {
+
+
+    var first = findFirst(timedData, start);
+    var last = findLast(timedData, first, end);
+    var newData = cleanDataTypes(timedData.slice(first, last), dataTypes);
+
+
+    return {
+        first: first,
+        last: last,
+        newData: newData
+    };
+
+};
+
+function cleanDataTypes(timedData, dataTypes) {
+
+    return timedData.map(
+        function (dataPoint) {
+
+            var newPoint = {
+                time: dataPoint.time
+            };
+            for (var i = 0; i < dataTypes; i++) {
+                if (dataPoint[dataTypes[i]]) {
+                    newPoint[dataTypes[i]] = dataPoint[dataTypes[i]];
+                }
+            }
+            return newPoint;
+        });
+}
+
+function findFirst(timedData, start) {
+
+    for (var i = 0; timedData[i].time < start && i < timedData.length;i++) {};
+    return i;
+}
+
+function findLast(timedData, startAt, stop) {
+    for (var i = startAt; i < timedData.length && timedData[i].time < stop;i++) {};
+    return i;
+}
+
+
 
 
 /*

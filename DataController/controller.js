@@ -23,9 +23,9 @@ setTimeout(registerController, 100);
 
 startHandlingSocketData(_sock);
 
-exports.db = function (ddbb) {
-    if (ddbb) {
-        _db = ddbb;
+exports.db = function (newDB) {
+    if (newDB) {
+        _db = JSON.parse(JSON.stringify(newDB));
     } else {
         return _db;
     }
@@ -34,9 +34,9 @@ exports.db = function (ddbb) {
 exports.current = function (curr) {
 
     if (curr) {
-        _current = curr;
+        _current = curr.slice();
     } else {
-        return _current;
+        return _current.slice();
     }
 };
 
@@ -125,12 +125,259 @@ var addDataToServer = exports.addDataToServer = function addDataToServer(serverI
 };
 
 
+
+
 exports.subscribe = function (handler) {
 
 
     _sock.addListener('newData', handler);
 
 };
+
+
+/*
+
+    getDataRequest(options, callback)
+
+    getDataFromDB
+ */
+
+var getData = exports.getData = function getData(options, callback) {
+
+    if (options) {
+
+        var options = options;
+
+        options.startTime = options.startTime || (new Date().getTime() - settings.currentLength || 360000);
+        options.endTime = options.endTime || new Date().getTime();
+
+
+        if (options.dataTypes && options.dataTypes.length > 0)
+        {
+            options.dataTypes = getValuesById(_db.dataTypes, options.dataTypes);
+
+        } else {
+
+            options.dataTypes = _db.dataTypes.slice();
+        }
+
+        // Required to send either servers[] or groups[]
+        if (options.groups && options.groups.length > 0) {
+
+            options.servers = getServersByGroup(_db.servers, options.groups);
+            options.groups = getValuesById(_db.groups, options.groups);
+
+
+        } else if (options.servers && options.servers.length > 0) {
+            options.servers = getValuesById(_db.servers, options.servers);
+            options.groups = getValuesById(_db.groups, getGroupIdsByServer(options.servers));
+
+
+
+        } else {
+            callback(new Error("Invalied options"));
+            return;
+        };
+
+        getCurrentMatchingData(options, function (newOptions, existingData) {
+
+            if (newOptions.more === false) {
+                callback(null, existingData);
+            } else {
+                myController.getData(newOptions, existingData, callback);
+            }
+        });
+
+    } else {
+        callback(new Error("Invalied options"));
+    }
+
+};
+
+// getValuesById (table[ {id: 4}, {id: 0}, {id: 32}, {id: 2} ], rowIds[0,2])
+// returns [table[1], table[3]];
+function getValuesById (table, rowIds) {
+
+    if(util.isArray(table) && util.isArray(rowIds)) {
+
+        return table.filter(function (row) {
+
+            for (var j = 0; j < rowIds.length; j++)
+            {
+                if (row.id === rowIds[j]) {
+                    return true;
+                }
+            }
+            return false;
+        });
+    } else {
+        return [];
+    }
+};
+
+// getValuesById (table[ {id: 4}, {id: 0}, {id: 32}, {id: 2} ], rowIds[0,2])
+// returns [table[1], table[3]];
+function getServersByGroup (servers, groupIds) {
+
+    if (util.isArray(servers) && util.isArray(groupIds)) {
+
+        return servers.filter(function (aServer) {
+
+            for (var i = 0; i < aServer.groups.length; i++)
+            {
+                for (var j = 0; j < groupIds.length; j++) {
+
+                    if (aServer.groups[i] == groupIds[j]) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+        });
+
+    } else {
+        return [];
+    }
+};
+
+function getGroupIdsByServer(servers) {
+
+    var groupIds = [];
+
+    for (var i = 0; i < servers.length; i++)
+    {
+        for (var j = 0; j < servers[i].groups; j++)
+        {
+
+            var found = false;
+            for (var k = 0; k < groupIds.length; k++)
+            {
+                if (groupIds[k] === servers[i].groups[j]) {
+                    found = true;
+                }
+            }
+            if (found === false) {
+                groupIds.push(servers[i].groups[j]);
+            }
+        }
+    }
+    return groupIds;
+};
+
+// options from above
+// call next(newOptions, dataFoundInCurrent)
+function getCurrentMatchingData(options, next) {
+
+    var newOptions = options;
+
+    var lookUp = makeLookUpKey(newOptions.servers);
+
+    var data = filterDataByTimeAndDataTypes(newOptions.startTime, newOptions.endTime, getFieldsFromDataTypes(newOptions.dataTypes), _current.filter(function (curr) { return lookUp[curr.id]; } ));
+
+    if (data.needMore === true && data.completedServerIds.length === newOptions.servers.length) {
+
+        newOptions.more = false;
+        next(newOptions, data.data);
+
+    } else {
+
+        newOptions.more = true;
+        newOptions.competed = data.completedServerIds;
+        next(newOptions, data.data);
+    }
+
+};
+
+function filterDataByTimeAndDataTypes(start, end, dataTypes, input) {
+
+
+    var ret = {
+        needMore: false,
+        completedServerIds: [],
+        data: []
+    };
+
+    for (var i = 0; i < input.length; i++) {
+
+        var temp = constrainAndFilterData(sortDataByTime(input[i].data, start, end, dataTypes));
+
+        if (temp.first > 0 || temp.first == input[i].data.length) {
+
+            ret.completedServerIds.push(input[i].id);
+
+        } else {
+            ret.needMore = true;
+        }
+
+        ret.data.push({
+            id: input[i].data,
+            data: temp.newData
+        });
+    }
+    return ret;
+}
+
+function getFieldsFromDataTypes(dataTypes) {
+    return dataTypes.map(function (dataType) {
+       return dataType.field;
+    });
+}
+
+function constrainAndFilterData(timedData, start, end, dataTypes) {
+
+
+    var first = findFirst(timedData, start);
+    var last = findLast(timedData, first, end);
+    var newData = cleanDataTypes(timedData.slice(first, last), dataTypes);
+
+
+    return {
+        first: first,
+        last: last,
+        newData: newData
+    };
+
+};
+
+function cleanDataTypes(timedData, dataTypes) {
+
+    return timedData.map(
+        function (dataPoint) {
+
+            var newPoint = {
+                time: dataPoint.time
+            };
+            for (var i = 0; i < dataTypes; i++) {
+                if (dataPoint[dataTypes[i]]) {
+                    newPoint[dataTypes[i]] = dataPoint[dataTypes[i]];
+                }
+            }
+            return newPoint;
+    });
+}
+
+function findFirst(timedData, start) {
+
+    for (var i = 0; timedData[i].time < start && i < timedData.length;i++) {};
+    return i;
+}
+
+function findLast(timedData, startAt, stop) {
+    for (var i = startAt; i < timedData.length && timedData[i].time < stop;i++) {};
+    return i;
+}
+
+
+function makeLookUpKey(values) {
+
+    var ret = [];
+    values.map(function (val) {
+        ret[val.id] = true;
+        return val;
+    });
+    return ret;
+}
+
 
 
 var getServerId = exports.getServerId = function getServerId(details) {
@@ -420,3 +667,10 @@ function registerController() {
     myController.sock(_sock);
 
 }
+
+
+function sortDataByTime(data) {
+    return data.sort(function (a, b) {
+        return a.time - b.time;
+    });
+};

@@ -23,6 +23,9 @@
     "recognizeByOrder": ["hostname", "ip"],
     "legacySettings": {
         "currentLength": 3600000,
-        "currentCleanupFrequency": 120000
-    }
+        "currentCleanupFrequency": 120000,
+        "throttleDB": 15000,
+        "forceSaveDB": 900000
+    },
+    "currentLength": 3600000
 }
