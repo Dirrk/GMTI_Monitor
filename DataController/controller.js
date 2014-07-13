@@ -10,10 +10,12 @@ var fs = require('fs');
 var nconf = require('nconf');
 var async = require('async');
 var events = require('events');
+var util = require('util');
 
 var _db = {};
 var _current = [];
-var _lock = true;
+var _lock = false;
+var __dbVersion = new Date().getTime();
 
 var _sock = new events.EventEmitter();
 
@@ -23,21 +25,37 @@ setTimeout(registerController, 100);
 
 startHandlingSocketData(_sock);
 
+function dbChanged() {
+    __dbVersion = new Date().getTime();
+    _sock.emit('dbChanged', _db);
+};
+
+exports.dbVersion = function dbVersion() {
+  return __dbVersion;
+};
+
 exports.db = function (newDB) {
     if (newDB) {
         _db = JSON.parse(JSON.stringify(newDB));
+        dbChanged();
     } else {
         return _db;
     }
 };
 
-exports.current = function (curr) {
+exports.current = function current(curr) {
 
     if (curr) {
-        _current = curr.slice();
+        _current = sortServerById(curr.slice());
     } else {
-        return _current.slice();
+        return sortServerById(_current.slice());
     }
+};
+function sortServerById(servers) {
+    var servers = servers || [];
+    return servers.sort(function (a, b) {
+        return a.id - b.id;
+    });
 };
 
 // Locking write / remove access from the current set of servers
@@ -63,10 +81,14 @@ exports.addServer = function (details, cb) {
 
     // add server to current and to _db
     var aServer = {
-        hostName: details.hostName,
-        ip: details.ip,
+        id: 0,
         name: details.hostName,
-        desc: ''
+        ip: details.ip,
+        hostName: details.hostName,
+        desc: '',
+        groups: [],
+        lastUpdate: 0,
+        server: details.hostName
     };
 
     myController.newServer(aServer, function(err, server) {
@@ -83,6 +105,7 @@ exports.addServer = function (details, cb) {
 
             _db.servers.push(server);
             _current.push(aCurr);
+            dbChanged();
 
             if (cb) {
                 cb(server);
@@ -91,6 +114,10 @@ exports.addServer = function (details, cb) {
     });
 
 };
+
+
+
+
 
 /***
  *
@@ -101,27 +128,30 @@ exports.addServer = function (details, cb) {
 
 var addDataToServer = exports.addDataToServer = function addDataToServer(serverId, values) {
 
+        log.trace("Adding data to server with serverId %d", serverId);
 
-    if (lock()) {
-
+        var found = false;
         for (var i = 0; i < _current.length; i++)
         {
             if (serverId === _current[i].id) {
 
                 _current[i].data.push(values);
+                found = true;
+                i = _current.length;
+                log.trace("Added to current data");
 
             }
         }
-        lock(0);
+        if (!found) {
+            var aServer = {
+                id: serverId,
+                data: [values]
+            };
+            _current.push(aServer);
+            log.trace("Added server to current");
+        };
         emitNewData(serverId, values);
 
-    } else {
-        setTimeout(
-            function() {
-                addDataToServer(serverId, values);
-            },
-         50);
-    }
 };
 
 
@@ -144,6 +174,8 @@ exports.subscribe = function (handler) {
 
 var getData = exports.getData = function getData(options, callback) {
 
+    log.debug("Options to controller.getData: %j", options);
+
     if (options) {
 
         var options = options;
@@ -154,7 +186,7 @@ var getData = exports.getData = function getData(options, callback) {
 
         if (options.dataTypes && options.dataTypes.length > 0)
         {
-            options.dataTypes = getValuesById(_db.dataTypes, options.dataTypes);
+            options.dataTypes = getValuesById(_db.dataTypes.slice(), options.dataTypes);
 
         } else {
 
@@ -164,26 +196,31 @@ var getData = exports.getData = function getData(options, callback) {
         // Required to send either servers[] or groups[]
         if (options.groups && options.groups.length > 0) {
 
-            options.servers = getServersByGroup(_db.servers, options.groups);
-            options.groups = getValuesById(_db.groups, options.groups);
+            log.debug("Required groups found");
+            options.servers = getServersByGroup(_db.servers.slice(), options.groups);
+            options.groups = getValuesById(_db.groups.slice(), options.groups);
 
 
         } else if (options.servers && options.servers.length > 0) {
-            options.servers = getValuesById(_db.servers, options.servers);
-            options.groups = getValuesById(_db.groups, getGroupIdsByServer(options.servers));
-
-
+            log.debug("Required servers found");
+            options.servers = getValuesById(_db.servers.slice(), options.servers);
+            options.groups = getValuesById(_db.groups.slice(), getGroupIdsByServer(options.servers));
 
         } else {
             callback(new Error("Invalied options"));
             return;
         };
 
-        getCurrentMatchingData(options, function (newOptions, existingData) {
+        log.debug("Options after modification: %j", options);
+
+        getCurrentMatchingData(options, function getCurrentMatchingDataCallback(newOptions, existingData) {
 
             if (newOptions.more === false) {
+                log.debug("newOptions.more === false");
                 callback(null, existingData);
             } else {
+                log.debug("newOptions %j", newOptions);
+                log.debug("existingData %j", existingData);
                 myController.getData(newOptions, existingData, callback);
             }
         });
@@ -197,6 +234,8 @@ var getData = exports.getData = function getData(options, callback) {
 // getValuesById (table[ {id: 4}, {id: 0}, {id: 32}, {id: 2} ], rowIds[0,2])
 // returns [table[1], table[3]];
 function getValuesById (table, rowIds) {
+
+    log.trace("table: %j rows: %j",table, rowIds);
 
     if(util.isArray(table) && util.isArray(rowIds)) {
 
@@ -217,11 +256,33 @@ function getValuesById (table, rowIds) {
 
 // getValuesById (table[ {id: 4}, {id: 0}, {id: 32}, {id: 2} ], rowIds[0,2])
 // returns [table[1], table[3]];
+exports.getServersByGroupIds = function getServersByGroupIds(groupIds) {
+  if (groupIds && groupIds.length && groupIds.length > 0) {
+
+      return getServersByGroup(_db.servers.slice(), groupIds);
+
+  }  else {
+      return [];
+  }
+};
+
+exports.getGroupsByIds = function getGroupsByIds(groupIds) {
+
+    return getValuesById(_db.groups.slice(), groupIds);
+
+
+};
+
 function getServersByGroup (servers, groupIds) {
+
+    log.trace("Servers: %j", servers);
+    log.trace("Groups: %j", groupIds);
 
     if (util.isArray(servers) && util.isArray(groupIds)) {
 
         return servers.filter(function (aServer) {
+
+            log.trace("A Server: %j", aServer);
 
             for (var i = 0; i < aServer.groups.length; i++)
             {
@@ -236,6 +297,7 @@ function getServersByGroup (servers, groupIds) {
         });
 
     } else {
+        log.debug("Didn't send arrays");
         return [];
     }
 };
@@ -274,6 +336,9 @@ function getCurrentMatchingData(options, next) {
 
     var data = filterDataByTimeAndDataTypes(newOptions.startTime, newOptions.endTime, getFieldsFromDataTypes(newOptions.dataTypes), _current.filter(function (curr) { return lookUp[curr.id]; } ));
 
+    log.debug("data: %j", data);
+
+
     if (data.needMore === true && data.completedServerIds.length === newOptions.servers.length) {
 
         newOptions.more = false;
@@ -291,6 +356,12 @@ function getCurrentMatchingData(options, next) {
 function filterDataByTimeAndDataTypes(start, end, dataTypes, input) {
 
 
+    log.debug("input: %j", input);
+    log.debug("start: %d  end: %d", start, end);
+
+    var start = start;
+    var end = end;
+
     var ret = {
         needMore: false,
         completedServerIds: [],
@@ -299,7 +370,8 @@ function filterDataByTimeAndDataTypes(start, end, dataTypes, input) {
 
     for (var i = 0; i < input.length; i++) {
 
-        var temp = constrainAndFilterData(sortDataByTime(input[i].data, start, end, dataTypes));
+        var temp = constrainAndFilterData(sortDataByTime(input[i].data), start, end, dataTypes);
+        log.debug("Constrained: %j", temp);
 
         if (temp.first > 0 || temp.first == input[i].data.length) {
 
@@ -310,7 +382,7 @@ function filterDataByTimeAndDataTypes(start, end, dataTypes, input) {
         }
 
         ret.data.push({
-            id: input[i].data,
+            id: input[i].id,
             data: temp.newData
         });
     }
@@ -325,6 +397,8 @@ function getFieldsFromDataTypes(dataTypes) {
 
 function constrainAndFilterData(timedData, start, end, dataTypes) {
 
+    log.debug("TimedData: %j", timedData);
+    log.debug("DataTypes: %j", dataTypes);
 
     var first = findFirst(timedData, start);
     var last = findLast(timedData, first, end);
@@ -341,13 +415,15 @@ function constrainAndFilterData(timedData, start, end, dataTypes) {
 
 function cleanDataTypes(timedData, dataTypes) {
 
+    log.debug("Sliced Data: %j", timedData);
+
     return timedData.map(
         function (dataPoint) {
 
             var newPoint = {
                 time: dataPoint.time
             };
-            for (var i = 0; i < dataTypes; i++) {
+            for (var i = 0; i < dataTypes.length; i++) {
                 if (dataPoint[dataTypes[i]]) {
                     newPoint[dataTypes[i]] = dataPoint[dataTypes[i]];
                 }
@@ -358,11 +434,14 @@ function cleanDataTypes(timedData, dataTypes) {
 
 function findFirst(timedData, start) {
 
-    for (var i = 0; timedData[i].time < start && i < timedData.length;i++) {};
+    log.debug("start: %d TimedData: %j", start, timedData);
+    for (var i = 0; i < timedData.length && timedData[i].time < start;i++) {};
     return i;
 }
 
 function findLast(timedData, startAt, stop) {
+
+    log.debug("start: %d, stop: %d, TimedData: %j ", startAt, stop, timedData);
     for (var i = startAt; i < timedData.length && timedData[i].time < stop;i++) {};
     return i;
 }
@@ -382,16 +461,20 @@ function makeLookUpKey(values) {
 
 var getServerId = exports.getServerId = function getServerId(details) {
 
+    log.trace("Details: %j", details);
+
     // settings.recognizeByOrder default ['hostName', 'ip']
     var recognizedOrder = settings.recognizeByOrder || ['hostName', 'ip'];
+    log.trace("recognizedOrder = %j", recognizedOrder);
 
     for (var i = 0; i < _db.servers.length; i++)
     {
-        for (var k = 0; k < recognizedOrder; k++)
-        {
 
-            if (details[recognizedOrder[k]] === _db.servers[i][recognizedOrder[k]] && (details[recognizedOrder[k]] !== '' || details[recognizedOrder[k]] != undefined))
+        for (var k = 0; k < recognizedOrder.length; k++)
+        {
+            if (details[recognizedOrder[k]] === _db.servers[i][recognizedOrder[k]] && (details[recognizedOrder[k]] !== '' && details[recognizedOrder[k]] != undefined))
             {
+                log.trace("Found: %d", _db.servers[i].id);
                 return _db.servers[i].id;
             }
         }
@@ -411,8 +494,7 @@ var getServerDetailsById = exports.getServerDetailsById = function getServerDeta
         {
             if (_db.servers[i].id === id) {
 
-                return _db.servers[i];
-
+                return JSON.parse(JSON.stringify(_db.servers[i]));
             }
         }
     } else {
@@ -428,7 +510,12 @@ exports.cleanConfig = function(cb) {
     if (settings.version && settings.version >= 1 && settings.dbFile) {
 
         _db = JSON.parse(fs.readFileSync(path.join(settings.dataDirectory, settings.dbFile), {encoding: 'utf8'}));
-        _current = JSON.parse(fs.readFileSync(path.join(settings.dataDirectory, settings.dbFile), {encoding: 'utf8'}));
+        try {
+            _current = JSON.parse(fs.readFileSync(path.join(settings.dataDirectory, settings.dataFile), {encoding: 'utf8'}));
+        } catch (err) {
+            _current = [];
+        }
+
         cb();
 
     } else if (settings.dbFile) {
@@ -465,7 +552,7 @@ exports.cleanConfig = function(cb) {
                 ip:         '',
                 hostName:   importDB.servers[i].server,
                 desc:       '',
-                groups:     [importDB.servers[i].group],
+                groups:     [(importDB.servers[i].group * 1) + 1],
                 lastUpdate: importDB.servers[i].lastUpdate,
                 server:     importDB.servers[i].server // legacy keeping for now so I can find errors easier
             };
@@ -495,11 +582,14 @@ exports.cleanConfig = function(cb) {
 
                 }
             };
+            for (var j = 0; j < aDashboard.legacyGroups.length; j++) {
+                aDashboard.legacyGroups[j]++;
+            }
             db.dashboards.push(aDashboard);
         }
         for (var i = 0; i < importDB.dataTypes.length; i++) {
             var aType = {
-                id:        importDB.dataTypes[i].id, // 1
+                id:        importDB.dataTypes[i].id + 1, // 1
                 name:      importDB.dataTypes[i].name, // CPU Percentage
                 field:     importDB.dataTypes[i].name, // cpu
                 valueType: 'Percent' // everything up to now has been a percent
@@ -620,46 +710,51 @@ function purgeDataHandler(sock) {
 
 function purgeData(toPurge) {
 
-    if (lock()) {
+    log.debug("ToPurge: %j", toPurge);
 
-        for(var i = 0; i < _current.length; i++) // goes through all of current once
+    for(var i = 0; i < _current.length; i++) // goes through all of current once
+    {
+        for (var k = 0; k < toPurge.length; k++) // up to n (but n -1) after every call so SUM = (n - 1)
         {
-            for (var k = 0; k < toPurge.length; k++) // n^2
+            if (_current[i].id === toPurge[k].id && _current[i].data)
             {
-                if (_current[i].id === toPurge[k].id && _current[i].data)
-                {
+                while (_current[i].data.length > 0 && _current[i].data[0].time <= toPurge[k].time) {
 
-                    for (var j = 0; j < _current[i].data.length; j++) // time is n^3
-                    {
+                    _current[i].data.unshift();
 
-                        if (_current[i].data[j].time === toPurge[k].time) {
-                            _current[i].data.splice(j,1);
-                            j = _current[i].data.length;
-                        }
-
-                    }
                 }
+                toPurge.splice(k,1);
+                k = toPurge.length;
             }
         }
-        lock(0);
-    } else {
-
-        setTimeout(
-          function() {
-            purgeData(id, time);
-          }
-        , 25);
-
+        if (toPurge.length === 0) { // stop processing
+            i = _current.length;
+        }
     }
-
 };
 
 
 function emitNewData(serverId, values) {
 
+    // var index = positionById(_db.servers, serverId);
+
+   /* if (index != null) {
+
+        _db.servers[index].lastUpdate = values.time;
+    } else {
+        log.error("positionById didn't work");
+    }*/
+
+    for (var i = 0; i < _db.servers.length; i++) {
+        if (_db.servers[i].id == serverId) {
+            _db.servers[i].lastUpdate = values.time || new Date().getTime();
+            i = _db.servers.length;
+        }
+    }
     _sock.emit('newData', serverId, values);
 
 };
+
 
 
 function registerController() {

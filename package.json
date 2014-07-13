@@ -11,7 +11,7 @@
     "less-middleware": "~0.1.15",
     "nconf": "*",
     "async": "*",
-    "easy-logger": "0.0.4",
+    "easy-logger": "0.0.5",
     "mysql": "*"
 
   }

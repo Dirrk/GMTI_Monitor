@@ -16,24 +16,25 @@ var settings = require('./settings.json') || {
     "archiveFolder": "./public/data/",
     "tempArchiveLength": 5,
     "archiveDays": 14,
-    "loglevel": 1,
+    "loglevel": 0,
     "dev": true
 };
 
 var easylogger = require('easy-logger');
-var log = easylogger.startGlobal(settings.loglevel);
-
+var log = easylogger.startGlobal({level: 1});
 log.log("Attempting to start slave process pid: %d", process.pid);
 
 
 var path = require('path');
-var nconf = require('nconf');
+// var nconf = require('nconf');
 var async = require('async');
 var controller = require('./DataController/controller');
 
 controller.cleanConfig(function() {
 
+    log.debug("Cleaned config called back");
     strictWrapper();
+
 });
 
 
@@ -87,12 +88,21 @@ function strictWrapper() {
     app.get('/manage', checkAuth, routes.manage); // setup later
 
     //      * api calls
-    app.post('/api/update', api.update);  // Servers send data
-    app.post('/api/data', api.data);  // called to get data about groups of servers
-    app.get('/api/data/:id', api.getData); // called from built dashboards
-    app.get('/groups', api.groups); // called to get list of groups
-    app.get('/servers', api.servers); // called to get list of servers
-    app.get('/dashboards', api.dashboards);
+    app.post('/api/update', api.update2);  // Servers send data
+    app.post('/api/data', api.data2);  // called to get data about groups of servers
+    app.get('/api/data/:id', api.getData2); // called from built dashboards
+
+    app.get('/api/groups', api.groups); // called to get list of groups
+    app.get('/api/servers', api.servers); // called to get list of servers
+    app.get('/api/dashboards', api.dashboards);
+    app.get('/api/db/:id', api.getDB);
+
+    app.all('/api/dashboard/:id', api.dashboard);
+    app.all('/api/server/:id', api.server);
+    app.all('/api/group/:id', api.group);
+
+
+
     app.get('/save', api.save); // called to initiate a save
     app.get('/reload', api.reload); // called to initiate a save
 
@@ -122,11 +132,6 @@ function strictWrapper() {
                                   }
     );
 
-    setInterval(function() {
-        controller.save(0);
-    }, 120000);
-
-
 
     function checkAuth(req, res, next) {
         // everyone wins!
@@ -140,7 +145,7 @@ function strictWrapper() {
     process.on('SIGABRT', lockData);
 
     function lockData() {
-        nconf.use('data').set('lock', true);
+        // nconf.use('data').set('lock', true);
         log.warn("Received Signal");
         setImmediate(process.exit());
     };

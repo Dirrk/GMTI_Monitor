@@ -5,6 +5,7 @@
 var nconf = require('nconf');
 var util = require('util');
 var log = require('easy-logger').logger();
+var controller = require('../DataController/controller.js');
 /*
 //      * moc dashboards
 app.get('/moc', dashboard.mocIndex);
@@ -57,9 +58,10 @@ exports.indexed = function (req, res) {
 
 
 function getFrontByURL(url) {
-    var fronts = nconf.get("db:fronts");
+
+    var fronts = controller.db().fronts;
     for (var i = 0; i < fronts.length; i++) {
-        if (url.indexOf(fronts[i].url) >= 0) {
+        if (url.indexOf(fronts[i].uri) >= 0) {
             return fronts[i];
         }
     }
@@ -68,10 +70,10 @@ function getFrontByURL(url) {
 
 function getDashboardById(id) {
 
-    var dashboards = nconf.get("db:dashboards") || [];
+    var dashboards = controller.db().dashboards || [];
     for (var i = 0; i < dashboards.length; i++)
     {
-        if (dashboards[i].id.toLowerCase() == id.toLowerCase())
+        if (dashboards[i].uri.toLowerCase() == id.toLowerCase())
         {
             return dashboards[i];
         }
@@ -86,7 +88,7 @@ function loadDashIndex(front, res) {
             front: front,
             dashboards: []
         };
-        var dashes = nconf.get('db:dashboards');
+        var dashes = controller.db().dashboards;
         for (var i = 0; i < dashes.length; i++)
         {
             if (dashes[i].front == front.id)
@@ -94,7 +96,7 @@ function loadDashIndex(front, res) {
                 data.dashboards.push(dashes[i]);
             }
         }
-        res.render('dashIndex', data);
+        res.render(front.template, data);
     } catch (e) {
         log.log(e);
         try {
@@ -117,9 +119,11 @@ function loadDashboard(front, dashboard, res, params) {
             barFormat: params || front.barFormat || 'cpu'
 
         };
-        log.info(params);
+        if (params) {
+            log.info("params: %j", params);
+        }
 
-        res.render('dashboard', data);
+        res.render(dashboard.template, data);
 
     } catch (e) {
         log.log(e);

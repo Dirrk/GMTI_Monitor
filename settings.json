@@ -1,5 +1,5 @@
 {
-
+    "version": 1,
     "dataDirectory": "./public/data/",
     "dataFile": "data.json",
     "dbFile": "db.json",
@@ -20,7 +20,7 @@
         "waitForConnections": true
     },
     "controller": "legacyArchive",
-    "recognizeByOrder": ["hostname", "ip"],
+    "recognizeByOrder": ["hostName", "ip"],
     "legacySettings": {
         "currentLength": 3600000,
         "currentCleanupFrequency": 120000,

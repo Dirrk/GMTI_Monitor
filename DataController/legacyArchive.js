@@ -86,6 +86,8 @@ exports.fixArchive = function (cb) {
 
 exports.save = function saveToDisk (count) {
 
+    return;
+
     var count = count || 0;
     count++;
 
@@ -129,13 +131,16 @@ var __DB_LOCK = false;
 
 function registerDBSync(_sock) {
 
-    _sock.on('dbChanged', function (db) {
+    _sock.on('dbChanged', function dbChangedSocketHandler(db) {
 
-        handleMergeDB(db, function (err, newDB) {
+        handleMergeDB(db, function handleMergeDBCallBack(err) {
 
-            if (err) {
+            if (err && err != 'wait') {
                 log.error("Could not merge db");
                 log.error(err);
+            } else if (err == 'wait') {
+
+                log.debug("Wait received, db is locked");
 
             } else {
                 log.info("Synced database");
@@ -172,6 +177,8 @@ function handleDBSyncInterval() {
                 log.info("Needed sync was performed successfully db: %j", { db: Object.keys(db) });
             }
         });
+    } else {
+        log.trace("No changes made to db");
     }
 
 };
@@ -239,9 +246,7 @@ function handleMergeDB(changes, callback) {
 
         log.debug("Merge DB requested: %j", changes);
 
-        var db = controller.db();
-
-        handleSaveDB(db, callback);
+        handleSaveDB(controller.db(), callback);
     }
 };
 
@@ -293,7 +298,8 @@ function handleSaveDB(db, callback) {
 
         var file = path.join(settings.dataDirectory, settings.dbFile);
 
-        writeOutJSON(file, db, 3, function (success) {
+        writeOutJSON(file, db, 3, function writeOutSaveDBCallback(success) {
+            __DB_LOCK = false;
             if (success === true) {
 
                 __dbSyncStatus = new Date().getTime();
@@ -303,14 +309,14 @@ function handleSaveDB(db, callback) {
 
                 callback(new Error("Could not save DB file %s", file), null);
             }
-
-            __DB_LOCK = false;
+            log.debug("Database file is no longer locked");
             _sock.emit("dbUnlocked");
         });
     } else {
 
-        _sock.once("dbUnlocked", function () {
+        _sock.once("dbUnlocked", function waitForDbUnlock() {
 
+            log.debug("Database file was locked but _sock says it is now unlocked");
             handleSaveDB(db, callback);
         });
 
@@ -962,25 +968,22 @@ function clearArchiveFromCurrent(toArchive) {
 
     var toPurge = [];
 
-    for (var i = 0; i < toArchive; i++)
+    for (var i = 0; i < toArchive.length; i++)
     {
         if (!toArchive[i].id) {
             toArchive[i].id = controller.getServerId({hostName: toArchive[i].server});
         }
 
-        if (toArchive[i].id != null) {
-            toPurge.push({id: toArchive[i].id, time: toArchive[i].point.time });
+        if (toArchive[i].id != null && toArchive[i].data && toArchive[i].data.length > 0) {
+
+            toPurge.push({id: toArchive[i].id, time: toArchive[i].data[toArchive[i].data.length - 1].time || 0 });
+
         } else {
             log.warn("PURGE Error: Trying to build purge list skipped a value from toArchive %j", toArchive[i]);
         }
     }
 
-    if (toPurge.length != toArchive.length) {
-
-        log.error("PURGE FAIL: Trying to build purge list failed miserably");
-        log.error("PURGE FAIL: toArchive: %j", toArchive);
-        log.error("PURGE FAIL: toPurge: %j", toPurge);
-    }
+    log.debug("Purge request sent %j", toPurge);
     _sock.emit('purge', toPurge);
 
 };
@@ -1003,14 +1006,14 @@ function combineNewServers(toArchive) {
             for (var j = 0; j < ret.length; j++) {
 
                 if (ret[j].id == toArchive[i].id) {
-                    log.debug("Combining data points to server " + ret[j].id);
+                    log.trace("Combining data points to server " + ret[j].id);
                     ret[j].data.push(toArchive[i].point);
                     found = j;
                 }
             }
             if (found === -1) {
 
-                log.debug('Combining new server ' + toArchive[i].id);
+                log.trace('Combining new server Archive: %j', toArchive[i]);
                 ret.push(
                     {
                      id: toArchive[i].id,
@@ -1018,18 +1021,27 @@ function combineNewServers(toArchive) {
                     });
             }
         }
-        return sortServerById(ret);
-
+        return sortServersAndData(ret);
     }
 };
 
+function sortServersAndData(servers) {
+    var ret = sortServerById(servers);
+    return ret.map(function (aServer) {
+       aServer.data = sortDataByTime(aServer.data);
+        return aServer;
+    });
+}
+
 function sortServerById(servers) {
+    var servers = servers || [];
     return servers.sort(function (a, b) {
         return a.id - b.id;
     });
 };
 
 function sortDataByTime(data) {
+    var data = data || [];
     return data.sort(function (a, b) {
         return a.time - b.time;
     });
@@ -1045,7 +1057,7 @@ function handleData(sock) {
 // Legacy does not need to manipulate current because current is held within
 function dataHandler(serverId, values) {
 
-    log.debug("New data from server(%d) with %s", serverId, values);
+    log.trace("New data from server(%d) with %j", serverId, values);
 
 };
 
@@ -1059,8 +1071,8 @@ function dataHandler(serverId, values) {
 
 function startTimers() {
 
-    setTimeout(cleanUpData2, legacySettings.currentCleanupFrequency);
-    setTimeout(handleDBSyncInterval, legacySettings.throttleDB * 2);
+    setInterval(cleanUpData2, legacySettings.currentCleanupFrequency);
+    setInterval(handleDBSyncInterval, legacySettings.throttleDB * 2);
 
 };
 
@@ -1077,16 +1089,15 @@ function cleanUpData2() {
 
         while (done !== true)
         {
-            if (temp.length > 0)
+            if (temp.length > 1) // keep the latest
             {
                 if (temp[0].time <= (new Date().getTime() - legacySettings.currentLength))
                 {
-                    log.debug("Sending to archive");
                     var newArch = {
                         id: servers[i].id,
                         point: servers[i].data.shift()
                     };
-                    log.debug("Sending to archive: %j", newArch);
+                    log.trace("Sending to archive: %j", newArch);
                     toArchive.push(newArch);
 
                 } else {
@@ -1098,30 +1109,47 @@ function cleanUpData2() {
             }
         }
     }
+    /*
+        toArchive = [ { id: 1, point: { data }}, { id: 1, pint: { data1 }} ]
+     */
+    log.trace("toArchive %j", toArchive);
 
     if (toArchive.length > 0) {
 
         log.log("Archiving %d objects", toArchive.length);
-        // log.debug("Archiving: %j", toArchive);
+        log.trace("Archiving: %j", toArchive);
 
         archiveData2(toArchive);
 
     }
+    var dataFile = path.join(settings.dataDirectory, settings.dataFile);
+    writeOutJSON(dataFile, servers, 1, function writeOutJSONCallback(success) {
+        if (success === true) {
+            log.log("Wrote out current file %s", dataFile);
+            log.trace("File: %s = %j", dataFile, servers);
+        } else {
+            log.warn("Failed to writeout %s", dataFile);
+        }
+    });
+
 };
 
 function archiveData2(toArchive) {
 
+    log.debug('toArchive %j', toArchive);
 
     if (toArchive && toArchive.length > 0) {
 
         // returns an array of toArchives split by days
         var splitArchives = sortPointsAndSplit(toArchive);
 
-        async.eachSeries(splitArchives, handleMergingArchive, function (err) {
+        log.trace('sortedPoints %j', splitArchives);
+
+        async.eachSeries(splitArchives, handleMergingArchive, function archiveData2Callback(err) {
             if (err) {
                 log.error("Error handling archive", err);
             } else {
-                log.info("Successfully merged archive");
+                log.debug("Successfully merged archive");
             }
         });
     }
@@ -1129,17 +1157,22 @@ function archiveData2(toArchive) {
 
 function handleMergingArchive(toMerge, next) {
 
-    if (toMerge && toMerge.length && toMerge.length > 0) {
+    log.debug("toMerge: %j", toMerge);
 
-        var outFile = path.join(settings.dataDirectory, getArchiveFileName(toMerge[0].point.time));
+    if (toMerge && toMerge.length && toMerge.length > 0 && toMerge[0].data && toMerge[0].data.length > 0) {
+
+        var outFile = path.join(settings.dataDirectory, getArchiveFileName(toMerge[0].data[0].time || new Date().getTime()));
 
         readInJSON(outFile, function (data) {
 
             if (!(data && data.length)) {
                 data = [];
             }
+            log.trace("read in Archive: %j", data);
 
-            var archive = mergeServers(combineNewServers(toMerge), data);
+            var archive = mergeServers(toMerge, data);
+
+            log.trace("writing out to Archive: %j", archive);
 
             writeOutJSON(outFile, archive, 3, function (success) {
                 if (success == true) {
@@ -1159,8 +1192,6 @@ function handleMergingArchive(toMerge, next) {
 };
 
 function writeOutJSON(fileName, data, tries, callback) {
-
-
 
     if (data && tries > 0) {
 
@@ -1218,6 +1249,13 @@ function sortedMergeServers(serversA, serversB) {
     var ret = [];
     var i = 0, j = 0;
 
+    var serversA = serversA || [];
+    var serversB = serversB || [];
+
+    log.trace("A: %j B: %j", serversA, serversB);
+
+
+
     while (i < serversA.length && j < serversB.length)
     {
 
@@ -1259,15 +1297,20 @@ function sortedMergeData(dataA, dataB) {
     var ret = [];
     var i = 0, j = 0;
 
+    var dataA = dataA || [];
+    var dataB = dataB || [];
+
+    log.trace("DataMerge: A: %j B: %j", dataA, dataB);
+
     while (i < dataA.length && j < dataB.length)
     {
 
-        if (dataA[i].id < dataB[j].id) {
+        if (dataA[i].time < dataB[j].time) {
 
             ret.push(dataA[i]);
             i++;
 
-        } else if (dataA[i].id > dataB[j].id) {
+        } else if (dataA[i].time > dataB[j].time) {
 
             ret.push(dataB[j]);
             j++;
@@ -1275,6 +1318,7 @@ function sortedMergeData(dataA, dataB) {
         } else {
 
             ret.push(dataA[i]);
+            ret.push(dataB[j]);
             i++;
             j++;
         }
@@ -1327,34 +1371,58 @@ function readInJSON(fileName, cb) {
     });
 };
 
+// toArchive = [ { id: 1, point: { data }}, { id: 1, pint: { data1 }} ]
 function sortPointsAndSplit(toArchive) {
 
-    var ret = [];
+    var ret = [],
+        oldestDate,
+        newestDate;
 
-    var toArchive = toArchive.sort(function (a, b) {
-        return a.point.time - b.point.time;
-    });
 
-    var currentDate = toArchive[0].point.time;
-    var currentNum = 0;
-    ret.push([ toArchive[0] ]);
+    if (toArchive.length && toArchive.length > 0) {
 
-    for (var i = 1; i < toArchive.length; i++)
-    {
+        // Sorted By Time
+        var toArchive = toArchive.sort(function (a, b) {
+            return a.point.time - b.point.time;
+        });
 
-        // Different day
-        if (comparePointDates(currentDate, toArchive[i].point.time) == false) {
+        try {
 
-            // create new array in ret
-            ret.push([ toArchive[i] ]);
-            currentDate = toArchive[i].point.time;
-            currentNum++;
+            oldestDate = toArchive[0].point.time;
+            newestDate = toArchive[toArchive.length - 1].point.time;
 
-        } else { // Same day, add to existing archive
-            ret[currentNum].push(toArchive[i]);
+        } catch (e) {
+            log.error("Invalid point or times %j", toArchive);
+            return ret;
         }
+
+        if (comparePointDates(oldestDate, newestDate)) {
+            return mergePoints([toArchive]);
+        } else {
+
+            var currentNum = 0;
+            ret[currentNum].push([toArchive[i]])
+            for (var i = 1; i < toArchive.length; i++) {
+
+                if (comparePointDates(oldestDate, toArchive[i].point.time) === false) {
+
+                    // create new array in ret
+                    ret.push([ toArchive[i]]);
+                    oldestDate = toArchive[i].point.time;
+                    currentNum++;
+
+                } else { // Same day, add to existing archive
+                    ret[currentNum].push(toArchive[i]);
+                }
+            }
+            return mergePoints(ret);
+        }
+
+    } else {
+
+        return ret;
     }
-    return ret;
+
 };
 
 function comparePointDates(a, b) {
@@ -1362,9 +1430,16 @@ function comparePointDates(a, b) {
     var aDate = new Date(a);
     var bDate = new Date(b);
 
-    return (aDate.getDate() == bDate.getDate() && aDate.getMonth() == bDate.getDate());
+    return (aDate.getDate() == bDate.getDate() && aDate.getMonth() == bDate.getMonth());
 
 };
+
+function mergePoints(multiArray) {
+
+    return multiArray.map(combineNewServers);
+
+}
+
 
 function getArchiveFileName(aDate) {
 
@@ -1412,7 +1487,7 @@ var getData = exports.getData = function getData(options, currentData, callback)
         start: options.startTime,
         end: options.endTime,
         servers: servers.filter(function (completed) {
-          for (var i = 0; i < options.completed.length; i++) {
+          for (var i = 0; options.completed && i < options.completed.length; i++) {
               if (completed.id == options.completed[i]) {
                   return false;
               }
@@ -1420,29 +1495,41 @@ var getData = exports.getData = function getData(options, currentData, callback)
           return true;
         })
     };
+    log.trace("Options2: %j", options2);
+    log.trace("Current: %j", currentData);
 
     var jobs = generateDataJobs(options2);
 
     async.mapSeries(jobs, handleDataJob, function (newData) {
 
-        finalizeDataJobs(options, finalData, newData, callback);
+        finalizeDataJobs(options, finalData, newData, function (finalData) {
+
+            var ret = {
+                servers: options.servers,
+                groups: options.groups,
+                dataTypes: options.dataTypes,
+                data: finalData
+            };
+
+            callback(null, ret);
+
+        });
 
     });
-
 };
 
-function generateDataJobs(options) {
+function generateDataJobs(options2) {
 
     var ret = [];
-    var rangeFiles = getRangeAndSplitFiles(options.start, options.end);
+    var rangeFiles = getRangeAndSplitFiles(options2.start, options2.end);
 
     for (var i = 0;  i < rangeFiles.length; i++) {
 
         var aJob = {
             file: rangeFiles[i].file,
-            start: options.start,
-            end: options.end,
-            servers: options.servers
+            start: options2.start,
+            end: options2.end,
+            servers: options2.servers
         };
 
         ret.push(aJob);
@@ -1454,18 +1541,23 @@ function getRangeAndSplitFiles(startTime, endTime) {
 
     var aTime = startTime;
     var eTime = endTime || (new Date().getTime());
-    var ret = [];
-    do {
+    var ret = [{ file: getArchiveFileName(aTime)}];
+
+    while (!comparePointDates(aTime, eTime) && aTime < eTime) {
 
         ret.push({ file: getArchiveFileName(aTime)});
-        aTime = aTime + 86400000; // add a day to it
 
-    } while (!comparePointDates(aTime, eTime));
+        aTime = aTime + 86400000;
 
+    };
+
+    log.debug("Ranged Files: %j", ret);
     return ret;
 }
 
 function handleDataJob (job, next) {
+
+    log.trace("Job: %j", job);
 
     readInJSON(job.file, function (data) {
 
@@ -1493,24 +1585,40 @@ function handleDataJob (job, next) {
 
 function finalizeDataJobs(options, currentData, archivedData, cb) {
 
-
+    if (!options) {
+        log.error("No options sent");
+    }
     var start = options.startTime;
     var end = options.endTime;
     var dataTypes = getFieldsFromDataTypes(options.dataTypes);
 
-    var combinedData = sortServerById(archivedData.shift());
+    var combinedData = [];
+    var archivedData = archivedData || [];
+
+    log.debug("currentData: %j", currentData);
+    log.debug("archivedData: %j", archivedData);
 
     while (archivedData.length > 0) {
         combinedData = sortedMergeServers(combinedData, sortServerById(archivedData.shift()));
+        log.trace("combinedData: %j", currentData);
     }
 
-    cb(null, sortedMergeServers(filterDataByTimeAndDataTypes(start, end, dataTypes, combinedData).data), sortServerById(currentData));
+    var out = sortedMergeServers(filterDataByTimeAndDataTypes(start, end, dataTypes, combinedData).data, sortServerById(currentData));
+    log.debug("Out: %j", out);
+    cb(out);
 
 }
 
 function filterDataByTimeAndDataTypes(start, end, dataTypes, input) {
 
 
+    log.trace("input: %j", input);
+    log.trace("start: %d  end: %d", start, end);
+
+    var start = start;
+    var end = end;
+
+    var input = input || [];
     var ret = {
         needMore: false,
         completedServerIds: [],
@@ -1530,7 +1638,7 @@ function filterDataByTimeAndDataTypes(start, end, dataTypes, input) {
         }
 
         ret.data.push({
-                          id: input[i].data,
+                          id: input[i].id,
                           data: temp.newData
                       });
     }
@@ -1545,6 +1653,8 @@ function getFieldsFromDataTypes(dataTypes) {
 
 function constrainAndFilterData(timedData, start, end, dataTypes) {
 
+
+    log.debug("timedData: %j", timedData);
 
     var first = findFirst(timedData, start);
     var last = findLast(timedData, first, end);
@@ -1567,7 +1677,7 @@ function cleanDataTypes(timedData, dataTypes) {
             var newPoint = {
                 time: dataPoint.time
             };
-            for (var i = 0; i < dataTypes; i++) {
+            for (var i = 0; i < dataTypes.length; i++) {
                 if (dataPoint[dataTypes[i]]) {
                     newPoint[dataTypes[i]] = dataPoint[dataTypes[i]];
                 }
@@ -1578,7 +1688,7 @@ function cleanDataTypes(timedData, dataTypes) {
 
 function findFirst(timedData, start) {
 
-    for (var i = 0; timedData[i].time < start && i < timedData.length;i++) {};
+    for (var i = 0; i < timedData.length && timedData[i].time < start;i++) {};
     return i;
 }
 
@@ -1587,6 +1697,18 @@ function findLast(timedData, startAt, stop) {
     return i;
 }
 
+
+
+exports.newServer = function newServer(server, cb) {
+
+  var servers = controller.db().servers;
+  var id = servers[servers.length - 1].id + 1;
+  var server = server;
+  server.id = id;
+  cb(null, server);
+  log.info("Added new server to db (%j)", server);
+  __dbSyncNeeded = true;
+};
 
 
 

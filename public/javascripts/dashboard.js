@@ -40,8 +40,10 @@ usageApp.controller('usageCntrl', ['$scope',
        $scope.drillDown = function (server) {
            $.external_callLoadDrillDown(server);
        }
-   }]
-);
+   }] );
+
+
+
 
 function safeHandler(dataId) {
 
@@ -53,6 +55,7 @@ function safeHandler(dataId) {
         previousPoint = null,
         previousPoint1 = null,
         dashboardDataUrl = '/api/data/',
+        dashboardSettingsUrl = '/api/dashboard/',
         dashboardId = "dev_test";
 
     // static
@@ -67,6 +70,22 @@ function safeHandler(dataId) {
     }
 
     dashboardDataUrl = dashboardDataUrl + dashboardId;
+    dashboardSettingsUrl = dashboardSettingsUrl + dashboardId;
+
+    sessionStorage.setItem("dashboardUrl", dashboardDataUrl);
+    sessionStorage.setItem("dashboardSettingsUrl", dashboardSettingsUrl);
+
+
+    getFirstData(function (success) {
+
+       if (success === true) {
+
+           loadData(true);
+
+       } else {
+           console.log("Error loading data");
+       }
+    });
 
     /**
      *  Load data from JSON API
@@ -78,10 +97,13 @@ function safeHandler(dataId) {
      */
 
      // run at start
-    loadData(true);
+    // loadData(true);
+
 
 
     function loadData(firstRun) {
+
+        return;
 
         console.log("Start: " + new Date().getTime());
 
@@ -933,9 +955,10 @@ function safeHandler(dataId) {
 
 
     // force refresh every 30 minutes
+    // No longer doing this.  Why because we want to remove the need to refresh or rebuild data?
     setTimeout(function() {
 
-        location.reload(true);
+        // location.reload(true);
 
     }, 1800000);
 };
@@ -945,6 +968,224 @@ $("#pickFormat").change(function () {
     newUrl = newUrl + '?view=' + $("#pickFormat").val();
     document.location.href=newUrl;
 });
+
+
+function getFirstData(callback) { // dashboardSettingsUrl (change to this soon)
+
+
+    syncDB(false, function () {
+
+        loadDashboardSettings(callback);
+
+    });
+
+};
+
+
+function syncDB(force, cb, tries) {
+
+    var dbVersion = localStorage.getItem("dbVersion");
+
+    if (force === true || dbVersion === null) {
+        dbVersion = 0;
+    }
+
+    var tries = tries || 0;
+
+    if (tries > 10) {
+        console.log("SyncDB did not succeed");
+        return;
+    }
+
+    $.get("/api/db/" + dbVersion)
+
+        .done( function (dbData) {
+
+                   if (dbData && dbData.version) {
+
+                       if (dbData.version == dbVersion) {
+                           console.log("db has the correct version already");
+                           if (cb && typeof cb === 'function') {
+                               cb();
+                           }
+                       } else if (dbData.db) {
+
+                           // should I clear this ?
+                           localStorage.clear();
+                           localStorage.setItem("dbVersion", dbData.version);
+                           placeValuesInStorage(dbData.db);
+
+                           if (cb && typeof cb === 'function') {
+                               cb();
+                           }
+
+                       } else {
+                           console.log("ERROR :: This wasn't expected, check the url");
+                           console.log(JSON.stringify(dbData));
+                           setTimeout(function () {
+                               syncDB(force, cb, tries + 1);
+                           }, (tries * 2000));
+                       }
+
+                   } else {
+                       console.log("ERROR :: Data is not in correct format");
+                       setTimeout(function () {
+                           syncDB(force, cb, tries + 1);
+                       }, (tries * 2000));
+                   }
+               })
+        .fail( function () {
+                   console.log("Did not download database try number: " + tries);
+                   setTimeout(function () {
+                       syncDB(force, cb, tries + 1);
+                   }, (tries * 2000));
+               })
+    ;
+
+}
+
+
+function placeValuesInStorage(data) {
+
+    var dbServerPrefix = 'db:server:',
+        dbGroupPrefix = 'db:group:',
+        dbDashPrefix = 'db:dashboard:',
+        dbFrontsPrefix = 'db:front:',
+        dbDataTypesPrefix = 'db:dataTypes:';
+
+    for (var i = 0; data.servers && data.servers.length && i < data.servers.length; i++) {
+        localStorage.setItem(dbServerPrefix + data.servers[i].id, JSON.stringify(data.servers[i]));
+    }
+
+    for (var i = 0; data.groups && data.groups.length && i < data.groups.length; i++) {
+        localStorage.setItem(dbGroupPrefix + data.groups[i].id, JSON.stringify(data.groups[i]));
+    }
+
+    for (var i = 0; data.dashboards && data.dashboards.length && i < data.dashboards.length; i++) {
+        localStorage.setItem(dbDashPrefix + data.dashboards[i].id, JSON.stringify(data.dashboards[i]));
+    }
+
+    for (var i = 0; data.fronts && data.fronts.length && i < data.fronts.length; i++) {
+        localStorage.setItem(dbFrontsPrefix + data.fronts[i].id, JSON.stringify(data.fronts[i]));
+    }
+
+    for (var i = 0; data.dataTypes && data.dataTypes.length && i < data.dataTypes.length; i++) {
+        localStorage.setItem(dbDataTypesPrefix + data.dataTypes[i].id, JSON.stringify(data.dataTypes[i]));
+    }
+
+};
+
+
+/*
+
+ var dbServerPrefix = 'db:server:';
+ var dbGroupPrefix = 'db:group:';
+
+
+ */
+
+
+function loadDashboardSettings (cb) {
+
+    var dbServerPrefix = 'db:server:';
+    var dbGroupPrefix = 'db:group:';
+    var serverPrefix = 'server:';
+    var groupPrefix = 'group:';
+
+    var settingsUrl = sessionStorage.getItem("dashboardSettingsUrl");
+
+    if (settingsUrl != null) {
+
+        $.get(settingsUrl).done( function( inData ) {
+
+            if (inData && inData.dashboard) {
+
+                console.log("Data Availible");
+
+                // sessionStorage will hold the dashboard value
+
+                sessionStorage.setItem("dashboard", JSON.stringify(inData.dashboard));
+
+
+                var groups = inData.groups || [];
+                var groupList = [];
+
+                // session will hold "group:ID:servers" = [1,2,3,8];
+                // and "groups" = [1,2,3]
+
+                for (var i = 0; i < groups.length; i++)
+                {
+                    // add to localStorage if it doesn't exist
+                    if (localStorage.getItem(dbGroupPrefix + groups[i].id) === null) {
+                        localStorage.setItem(dbGroupPrefix + groups[i].id, JSON.stringify(groups[i]));
+                    }
+                    sessionStorage.setItem(groupPrefix + groups[i].id + ':servers', JSON.stringify([]));
+                    groupList.push(groups[i].id);
+                }
+
+
+                sessionStorage.setItem('groups', JSON.stringify(groupList));
+
+                // session will hold "server:ID:data" = [{ time: 0, cpu: 0, mem: 1 }, { time: 0, cpu: 0, mem: 1 }]; sorted by time (oldest, newest)
+                // "server:HOSTNAME" = "id"; allows for lookup by name quickly
+                // "servers" = [1,2,3,8]; ids of servers
+
+                var servers = inData.servers || [];
+                var serverList = [];
+
+                for (var i = 0; i < servers.length; i++) {
+
+                    serverList.push(servers[i].id);
+
+                    // Add to localStorage if not found
+                    if (localStorage.getItem(dbServerPrefix + servers[i].id) === null) {
+                        localStorage.setItem(dbServerPrefix + servers[i].id, JSON.stringify(servers[i]));
+                    }
+
+                    sessionStorage.setItem((serverPrefix + servers[i].hostName), servers[i].id);
+                    sessionStorage.setItem((serverPrefix + servers[i].id + ':data'), JSON.stringify([]));
+
+                    for (var j = 0; j < servers[i].groups.length; j++) {
+
+                        var temp = sessionStorage.getItem(groupPrefix + servers[i].groups[j] + ':servers');
+                        var newVal = [];
+                        if (temp != null) {
+                            newVal = JSON.parse(temp);
+                        }
+                        newVal.push(servers[i].id);
+                        sessionStorage.setItem(groupPrefix + servers[i].groups[j] + ':servers', JSON.stringify(newVal));
+                    }
+                }
+                sessionStorage.setItem('servers', JSON.stringify(serverList));
+
+                console.log("Successfully loaded session settings data");
+
+                if (cb && typeof cb === 'function') {
+                    cb(true);
+                }
+
+            } else {
+                console.log("This should have never happened.  Dashboard should always be there");
+                if (cb && typeof cb === 'function') {
+                    cb(false);
+                }
+            }
+        }).fail( function () {
+
+            console.log("dashboard failed to load settings");
+            if (cb && typeof cb === 'function') {
+                cb(false);
+            }
+
+        });
+
+    } else {
+        if (cb && typeof cb === 'function') {
+            cb(false);
+        }
+    }
+}
+
 
 function sortServers(servers) {
 
@@ -957,11 +1198,8 @@ function sortServers(servers) {
         } else {
             return 0;
         }
-
     });
 }
-
-$()
 
 /*
 

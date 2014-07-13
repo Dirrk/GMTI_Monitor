@@ -2,9 +2,10 @@
  * Created by Derek Rada on 5/9/2014.
  */
 
-var nconf = require('nconf').use('data');
+var nconf = require('nconf');
 var util = require('util');
 var log = require('easy-logger').logger();
+var controller = require('../DataController/controller.js');
 
 exports.report = function(req, res) {
 
@@ -257,11 +258,18 @@ function combinedServers(body) {
 
 exports.customReport = function(req, res) {
 
-    var servers = nconf.get('db:servers');
+    var db = controller.db();
 
     res.render('customReport', {
-        servers: sortServers(servers),
-        dataTypes: nconf.get('db:dataTypes')
+        servers: sortServerById(db.servers),
+        dataTypes: db.dataTypes
     });
 
+};
+
+function sortServerById(servers) {
+    var servers = servers || [];
+    return servers.sort(function (a, b) {
+        return a.id - b.id;
+    });
 };

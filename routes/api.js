@@ -7,7 +7,7 @@
  *
  */
 
-var nconf = require('nconf').use('data');
+var nconf = require('nconf');
 var debug = false;
 var util = require('util');
 var async = require('async');
@@ -194,7 +194,7 @@ exports.update = function(req, res) {
 // for (var i = 0; i < Object.keys(test).length; i++) { console.log(Object.keys(test)[i]); }
 // for (var i = 0; i < Object.keys(test).length; i++) { console.log(test[Object.keys(test)[i]]); }
 
-exports.update2 = function (req, res) {
+exports.update2 = function update2(req, res) {
 
     var details = {
         id: 0,
@@ -226,10 +226,28 @@ exports.update2 = function (req, res) {
 
     res.send(200);
 
+    log.trace("Details: %j", details);
+    log.trace("Values: %j", values);
+
     addServerData2(details, values);
 
 };
 
+exports.getDB = function getDB(req, res) {
+
+    var version = controller.dbVersion();
+    if (req.params.id && req.params.id > 0 && req.params.id == version) {
+
+        res.json({version: version});
+
+    } else {
+
+        res.json({
+         version: version,
+         db: controller.db()
+        });
+    }
+};
 
 function addServerData2(details, values) {
 
@@ -238,6 +256,7 @@ function addServerData2(details, values) {
 
     if (details.id != null)
     {
+        log.trace("Adding new data for existing server");
         controller.addDataToServer(details.id, values);
 
     } else {
@@ -281,15 +300,16 @@ function addServerData(server, cpu, mem) {
 };
 
 exports.save = function(req, res) {
-    res.send(200);
-    controller.save(5);
+
+    res.json(sortServerById(controller.current()));
+  //  controller.save(5);
 };
 
 exports.reload = function(req, res) {
 
     res.send(200);
 
-    controller.save(5);
+    // controller.save(5);
 
 
 };
@@ -298,6 +318,7 @@ exports.manage = function (req, res) {
     res.send("Manage");
 };
 
+// TODO
 exports.manageServer = function (req, res) {
 
     if (req.body.command && util.isArray(req.body.servers)) {
@@ -346,14 +367,225 @@ exports.data2 = function (req, res) {
     // groups []
     // servers []
     // dataTypes (cpu, mem)
-    // method (current, avgByGroup, avgByServer, currentAvgByGroup, currentAvgByServer, currentAvg)
+    // method (last average or null)
 
 
+    var options = req.body;
+    var method = options.method || req.param('method');
+
+    options.groups = options.groups || [];
+    options.servers = options.servers || [];
+    options.dataTypes = options.dataTypes || [];
+    log.debug("Method = %s", method);
+
+    switch (method) {
+        case 'average': // average by server and group
+            handleAverage(options, res);
+            break;
+        case 'last': // last minute
+            options.startTime = new Date().getTime() - 60000;
+            options.endTime = new Date().getTime();
+        default:
+            handleDataRequest(options, res);
+    }
+};
 
 
+function handleAverage(options, res) {
 
+    log.debug("Options sent: %j", options);
+    var ret = {
+        servers: [],
+        groups: [],
+        dataTypes: [],
+        data: [],
+        averages: {}
+    };
+    controller.getData(options, function (err, data) {
+        if (err) {
+            log.error(err);
+        } else {
+            log.debug("getData returned with data");
+            ret = data;
+        }
+        ret.averages = getAverageCalculations(ret);
+        log.debug("getAverageCalcs returned with data");
+        res.json(ret);
+    });
+
+}
+
+/***
+ *
+ * averages: { servers: [ { id: 1, average: { cpu: 32.12, mem: 14.2 } }, { id: 2, average: { cpu: 47:12, mem: 13.6 } } ], groups: [ { id: 1, average: { cpu: 12.4, mem: 14.3 } } ], total: {cpu: 43.1, mem: 12.34 }} }
+ * @param values
+ */
+function getAverageCalculations(values) {
+
+    var ret = values;
+    var averages = {
+        servers: [],
+        groups: [],
+        all: {}
+    };
+    var serverData = ret.data;
+    var allCounts = {};
+    var groupData = [];
+
+    for (var i = 0; i < ret.groups.length; i++) {
+        groupData[ret.groups[i].id] = {
+            id: ret.groups[i].id,
+            average: {},
+            total: {},
+            count: {},
+            high: {},
+            low: {}
+        };
+    }
+
+    for (var i = 0; i < serverData.length; i++)
+    {
+
+        var aServer = {
+            id: data[i].id,
+            average: {},
+            total: {},
+            count: {},
+            high: {},
+            low: {}
+        };
+        var preGroups = controller.getServerDetailsById(aServer.id).groups || [];
+        var groups = [];
+
+        for (var j = 0; j < preGroups.length; j++) { // put groups needed in groups
+
+            for (var k = 0; k < ret.groups.length; k++)
+            {
+                groups.push(preGroups[j]);
+            }
+        }
+
+        for (var j = 0; j < ret.dataTypes.length; j++) {
+            if (i === 0) {
+                averages.all[ret.dataTypes[j].field] = 0.00;
+                allCounts[ret.dataTypes[j].field] = 0;
+            }
+            aServer.average[ret.dataTypes[j].field] = 0.00;
+            aServer.total[ret.dataTypes[j].field] = 0.00;
+            aServer.count[ret.dataTypes[j].field] = 0;
+
+            for (var k = 0; k < groups.length; k++) {
+
+                groupData[groups[k]].average[ret.dataTypes[j].field] = 0.00;
+                groupData[groups[k]].total[ret.dataTypes[j].field] = 0.00;
+                groupData[groups[k]].count[ret.dataTypes[j].field] = 0;
+
+            }
+
+        }
+        for (var j = 0; j < serverData[i].data.length; j++) { // Go through servers data objects { time: 0, cpu: 0, mem: 0 }
+
+            for (var k = 0; k < ret.dataTypes.length; k++) { // go through the data types
+
+                if (serverData[i].data[j][ret.dataTypes[k].field] != undefined) { // if data point has the dataType
+
+                    // Server
+                    aServer.total[ret.dataTypes[k].field] += serverData[i].data[j][ret.dataTypes[k].field]; // add to current servers total
+                    aServer.count[ret.dataTypes[k].field]++; // add to current servers count
+
+                    // All
+                    averages.all[ret.dataTypes[k].field] += serverData[i].data[j][ret.dataTypes[k].field]; // add to all total
+                    allCounts[ret.dataTypes[k].field]++; // add to all count
+
+                    // Highs
+                    if (!aServer.high[ret.dataTypes[j].field]) {
+                        aServer.high[ret.dataTypes[j].field] = serverData[i].data[j][ret.dataTypes[k].field];
+                    } else if (aServer.high[ret.dataTypes[j].field] < serverData[i].data[j][ret.dataTypes[k].field]) {
+                        aServer.high[ret.dataTypes[j].field] = serverData[i].data[j][ret.dataTypes[k].field];
+                    }
+                    // Lows
+                    if (!aServer.low[ret.dataTypes[j].field]) {
+                        aServer.low[ret.dataTypes[j].field] = serverData[i].data[j][ret.dataTypes[k].field];
+                    } else if (aServer.low[ret.dataTypes[j].field] > serverData[i].data[j][ret.dataTypes[k].field]) {
+                        aServer.low[ret.dataTypes[j].field] = serverData[i].data[j][ret.dataTypes[k].field];
+                    }
+
+                    // Groups
+                    for (var l = 0; l < groups.length; l++) { // get group data
+                        groupData[groups[l]].count[ret.dataTypes[k].field] += serverData[i].data[j][ret.dataTypes[k].field];
+                        groupData[groups[l]].total[ret.dataTypes[k].field] += serverData[i].data[j][ret.dataTypes[k].field];
+                    }
+                }
+            }
+        }
+
+        for (var j = 0; j < ret.dataTypes.length; j++) {
+
+            if (aServer.count[ret.dataTypes[j].field] > 0) {
+                aServer.average[ret.dataTypes[j].field] = (aServer.total[ret.dataTypes[j].field] / aServer.count[ret.dataTypes[j].field])
+            }
+            for (var k = 0; k < groups.length; k++) {
+
+                // Highs
+                if (!groupData[groups[k]].high[ret.dataTypes[j].field]) {
+                    groupData[groups[k]].high[ret.dataTypes[j].field] = aServer.high[ret.dataTypes[j].field];
+                } else if (groupData[groups[k]].high[ret.dataTypes[j].field] < aServer.high[ret.dataTypes[j].field]) {
+                    groupData[groups[k]].high[ret.dataTypes[j].field] = aServer.high[ret.dataTypes[j].field];
+                }
+                // Lows
+                if (!groupData[groups[k]].low[ret.dataTypes[j].field]) {
+                    groupData[groups[k]].low[ret.dataTypes[j].field] = aServer.low[ret.dataTypes[j].field];
+                } else if (groupData[groups[k]].low[ret.dataTypes[j].field] > aServer.low[ret.dataTypes[j].field]) {
+                    groupData[groups[k]].low[ret.dataTypes[j].field] = aServer.low[ret.dataTypes[j].field];
+                }
+            }
+        }
+        averages.servers.push(aServer);
+    }
+
+    groupData.forEach(function (group) {
+
+        if (group != null) {
+
+            for (var i = 0; i < ret.dataTypes.length;i++) {
+
+                if (group.count[ret.dataTypes[j].field] > 0) {
+                    group.average[ret.dataTypes[j].field] = (group.total[ret.dataTypes[j].field] / group.count[ret.dataTypes[j].field]);
+                }
+            }
+            averages.groups.push(group);
+        }
+    });
+
+    for (var i = 0; i < ret.dataTypes.length; i++) {
+        if (allCounts[ret.dataTypes[i].field] > 0) {
+            averages.all[ret.dataTypes[i].field] = (ret.averages.all[ret.dataTypes[i].field] / allCounts[ret.dataTypes[i].field]);
+        }
+    }
+    return averages;
 
 };
+
+function handleDataRequest(options, res) {
+
+    var ret = {
+        servers: [],
+        groups: [],
+        dataTypes: [],
+        data: []
+    };
+
+    controller.getData(options, function (err, data) {
+        if (err) {
+            log.error(err);
+        } else {
+            ret = data;
+        }
+        res.json(ret.data);
+    });
+
+}
+
 
 // This will do the post request for data where you send certain groups
 exports.data = function (req, res) {
@@ -376,13 +608,33 @@ exports.data = function (req, res) {
 
 };
 
+exports.getData2 = function getData2(req, res) {
+
+    log.debug("GetData2 %s", req.params.id);
+
+    if (req.params.id) {
+
+        var dashboard = getDashboardByUri(req.params.id);
+
+        var options = {
+            startTime: new Date().getTime() - 900000,
+            endTime: new Date().getTime(),
+            groups: dashboard.legacyGroups
+        };
+        log.debug("Options: %j", options);
+        handleDataRequest(options, res);
+        // handleAverage(options, res);
+    }
+};
+
+
 exports.getData = function (req, res) {
 
     if (req.params.id) {
 
         try {
 
-            var dashboard = getDashboardById(req.params.id);
+            var dashboard = getDashboardByUri(req.params.id);
 
             // get servers
             var servers = getServersInGroups(nconf.get('servers'), dashboard.groups);
@@ -403,18 +655,19 @@ exports.getData = function (req, res) {
 
 exports.groups = function (req, res) {
 
-    res.json(nconf.get('db:groups'));
+    res.json(controller.db().groups);
 };
 
 exports.servers = function (req, res) {
 
-    res.json(nconf.get('db:servers'));
+    res.json(controller.db().servers);
 };
 
 exports.dashboards = function (req, res) {
-    res.json(nconf.get('db:dashboards'));
+    res.json(controller.db().dashboards);
 };
 
+// TODO
 exports.createServer = function (req, res) {
 
     var newServers = [],
@@ -468,6 +721,7 @@ exports.createServer = function (req, res) {
 
 };
 
+// TODO
 exports.manageGroup = function (req, res) {
 
     var groups = nconf.get('db:groups');
@@ -532,6 +786,7 @@ exports.manageGroup = function (req, res) {
     }
 };
 
+// TODO
 exports.manageDash = function (req, res) {
 
     var dashboards = nconf.get('db:dashboards');
@@ -597,6 +852,62 @@ exports.manageDash = function (req, res) {
 };
 
 
+/*
+ TODO
+ app.all('/api/dashboard/:id', api.dashboard);
+ app.all('/api/server/:id', api.server);
+ app.all('/api/group/:id', api.group);
+
+ */
+
+exports.dashboard = function dashboard(req, res) {
+
+
+    if (req.method == 'GET' || req.method == 'get') {
+
+        var dashboards = controller.db().dashboards;
+        var dashboard = {};
+        var id = req.params.id;
+        for (var i = 0; i < dashboards.length; i++) {
+            if (dashboards[i].id === id || dashboards[i].uri.toLowerCase() == id.toString().toLowerCase()) {
+                dashboard = dashboards[i];
+            }
+        }
+        if (dashboard.id > 0) {
+
+            var ret = {
+                dashboard: dashboard,
+                servers: controller.getServersByGroupIds(dashboard.legacyGroups),
+                groups: controller.getGroupsByIds(dashboard.legacyGroups)
+            };
+
+            log.debug(ret.groups);
+
+            res.json(ret);
+
+        } else {
+            res.json(dashboards);
+        }
+
+
+    } else {
+        res.send(req.method.toString());
+    }
+
+
+
+};
+
+exports.server = function server(req, res) {
+
+    res.send(req.method.toString());
+};
+
+exports.group = function group(req, res) {
+
+    res.send(req.method.toString());
+};
+
 
 
 /*
@@ -612,6 +923,7 @@ exports.getArchive = function (req, res) {
     res.json(db);
 
 };
+
 
 function lookUpGroup(serverName) {
 
@@ -667,6 +979,14 @@ function sortServers(servers) {
     return servers2;
 };
 
+function sortServerById(servers) {
+    var servers = servers || [];
+    return servers.sort(function (a, b) {
+        return a.id - b.id;
+    });
+};
+
+
 function parseGroups(inputGroups) {
 
     var groups = nconf.get('db:groups');
@@ -688,19 +1008,25 @@ function parseGroups(inputGroups) {
     return ret;
 };
 
-function getDashboardById(id) {
+// DONE
+function getDashboardByUri(id) {
 
-    var dashboards = nconf.get("db:dashboards") || [];
+    var dashboards = controller.db().dashboards || [];
+
     for (var i = 0; i < dashboards.length; i++)
     {
-        if (dashboards[i].id.toLowerCase() == id.toLowerCase())
+        if (dashboards[i].uri.toLowerCase() == id.toLowerCase())
         {
+            log.debug("Found dashboard");
             return dashboards[i];
         }
     }
+
+    log.debug("Couldn't Find dashboard");
     return dashboards[0] || null; // return the test devices
 };
 
+// TODOD
 function getGroupById(id) {
     var groups = nconf.get("db:groups") || [];
     for (var i = 0; i < groups.length; i++)

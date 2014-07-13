@@ -1,5 +1,7 @@
 //
    Created by Derek Rada on 4/18/2014.
+   Legacy dashboard view
+
 extends layout
 block append style
     link(rel='stylesheet', href='/stylesheets/index.css')
@@ -13,7 +15,7 @@ block append header
         p /
         if (front)
             h1
-                a(href="#{front.url}") #{front.name}
+                a(href="#{front.uri}") #{front.name}
             p /
             if (dashboard)
                 h1 #{dashboard.name}
@@ -97,7 +99,7 @@ block append content
         // #cputime.flotFullWShortH
 
     if (dashboard)
-        #hiddenField(data-did="#{dashboard.id}")
+        #hiddenField(data-did="#{dashboard.uri}")
     else
         #hiddenField(data-did="dev_test")
 
