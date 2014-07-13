@@ -8,12 +8,13 @@
  */
 var os = require('os'),
     host = os.hostname(),
-    nconf = require('nconf');
+    nconf = require('nconf'),
+    controller = require('../DataController/controller.js');
 
 
 exports.index = function(req, res){
 
-  var fronts = nconf.get('db:fronts');
+  var fronts = controller.db().fronts;
 
   res.render('index',
              {
