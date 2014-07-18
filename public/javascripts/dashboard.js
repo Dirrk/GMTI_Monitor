@@ -72,6 +72,8 @@ function safeHandler(dataId) {
     dashboardDataUrl = dashboardDataUrl + dashboardId;
     dashboardSettingsUrl = dashboardSettingsUrl + dashboardId;
 
+
+    sessionStorage.clear();
     sessionStorage.setItem("dashboardUrl", dashboardDataUrl);
     sessionStorage.setItem("dashboardSettingsUrl", dashboardSettingsUrl);
 
@@ -103,37 +105,114 @@ function safeHandler(dataId) {
 
     function loadData(firstRun) {
 
-        return;
-
         console.log("Start: " + new Date().getTime());
+        var dashBoardDataUrl = sessionStorage.getItem("dashboardUrl");
 
-        $.get(dashboardDataUrl).success( function( inData ) {
+        if (dashBoardDataUrl !== null) {
 
-            console.log("performed loadData");
-            console.log(inData);
+            $.get(dashboardDataUrl).success( function( inData ) {
 
-            if (inData && inData.servers && inData.servers.length > 0) {
+                console.log("performed loadData");
+                //console.log(inData);
 
-                console.log("inside load if of loadData");
+                if (inData && inData.length && inData.length > 0) {
 
-                currentDataPoints = sortServers(inData.servers);
+                    console.log("inside load of loadData");
 
-                currentGroups = inData.groups || [];
+                    currentDataPoints = legacyFix(inData);
 
-                console.log("Mid: " + new Date().getTime());
+                    // currentGroups = inData.groups || [];
+                    currentGroups = JSON.parse(sessionStorage.getItem("groups")) || [];
 
-                loadBarUI(currentDataPoints);
-                // loadGaugesUI(currentDataPoints);
-                if (firstRun === true) {
-                    loadGaugesUI2(currentDataPoints);
+                    console.log("Mid: " + new Date().getTime());
+
+                    loadBarUI(currentDataPoints);
+                    // loadGaugesUI(currentDataPoints);
+                    if (firstRun === true) {
+                        loadGaugesUI2(currentDataPoints);
+                    }
+                    loadSortUI(currentDataPoints);
+                    loadGroupsAverageTimeGraph(currentDataPoints, currentGroups);
+                    $(".currentTime").text(new Date().toLocaleString());
+                    console.log("End: " + new Date().getTime());
+                } else {
+                    console.log("failed load of data:" + inData.length);
                 }
-                loadSortUI(currentDataPoints);
-                loadGroupsAverageTimeGraph(currentDataPoints, currentGroups);
-                $(".currentTime").text(new Date().toLocaleString());
-                console.log("End: " + new Date().getTime());
+            });
+            setTimeout(function() { loadData(); }, 15000); // should be 15s
+
+        } else {
+            console.log("dashboardUrl does not exist!!!");
+        }
+
+
+    };
+
+    function legacyFix(inData) {
+
+        if (inData && inData.length) {
+
+            var ret = inData.slice();
+
+            for (var i = 0; i < ret.length; i++) {
+
+                if (inData[i].id && localStorage.getItem("db:server:" + inData[i].id)) {
+
+                    ret[i].server = JSON.parse(localStorage.getItem("db:server:" + inData[i].id)).name;
+
+                } else {
+
+                    i = ret.length; // stop parsing this shit
+                    syncDB();
+                    return [];
+                    ret[i].server = "unknown-" + inData[i].id || i;
+                    console.log("LegacyFix :: Added unknown server should I have downloaded this data instead?");
+
+                }
+                // console.log("LegacyFixed " + ret[i].server);
             }
-        });
-        setTimeout(function() { loadData(); }, 15000);
+            importCurrentData(inData);
+            return ret;
+
+        } else {
+            return [];
+        }
+    };
+
+    function importCurrentData(inData) {
+
+        for(var i = 0; inData && inData.length && i < inData.length; i++) {
+
+            if (inData[i].id) {
+                sessionStorage.setItem("server:" + inData[i].id + ":data", JSON.stringify(inData[i].data || []));
+            } else {
+                console.log("Data did not contain an ID!!!!! inData[" + i+ "] = " + JSON.stringify(inData[i]));
+            }
+        }
+    };
+
+
+    function loadData2() {
+
+        var dashBoardDataUrl = sessionStorage.getItem("dashboardUrl");
+
+        if (dashBoardDataUrl !== null) {
+
+            $.get(dashBoardDataUrl)
+                .done( function (servers) {
+
+                                       
+
+                })
+                .fail ( function () {
+
+            });
+
+
+
+        }
+
+
     };
 
     /**
@@ -236,7 +315,7 @@ function safeHandler(dataId) {
 
             for (var i = 0; i < input.length;i++)
             {
-                console.log("Server: " + input[i].server);
+                // console.log("Server: " + input[i].server);
 
                 var server = {
                     server: input[i].server,
@@ -408,7 +487,7 @@ function safeHandler(dataId) {
         }
         setTimeout(function() {
             refreshMe(getAverages(currentDataPoints));
-        }, 30000);
+        }, 15000);
     }
 
     /**
@@ -691,20 +770,23 @@ function safeHandler(dataId) {
 
     };
 
+
     function splitIntoGroupsAndAverage(curData, groups, size) {
 
         var ret = [];
 
         for (var i = 0; i < groups.length; i++)
         {
+            var aGroup = JSON.parse(localStorage.getItem("db:group:" + groups[i]) || '"{}"');
             var temp = {
-                groupName: groups[i].name,
-                groupId: groups[i].id,
+                groupId: groups[i],
+                groupName: aGroup.name || "unknown-" + groups[i],
                 servers: [],
                 cpuData: [],
                 memData: [],
                 counts: []
             };
+
             // fill data with empty set
             for (var h = 0; h < size; h++)
             {
@@ -713,13 +795,20 @@ function safeHandler(dataId) {
                 temp.counts[h] = 0;
             }
 
+
             // place all servers in this group into temp
+            // iterate through each server
+            var groupServers = JSON.parse(sessionStorage.getItem("group:" + groups[i] + ":servers") || '"[]"');
+
             for (var j = 0; j < curData.length; j++)
             {
-                if (curData[j].group == temp.groupId)
-                {
-                    temp.servers.push(curData[j]);
-                }
+
+               for (var k = 0; k < groupServers.length; k++) {
+
+                   if (groupServers[k] == curData[j].id) {
+                       temp.servers.push(curData[j]);
+                   }
+               }
             }
 
             // iterate through the servers in temp
@@ -747,7 +836,6 @@ function safeHandler(dataId) {
                 }
             }
 
-            console.log("Temp: " + temp);
             ret.push(temp);
 
         }
@@ -1042,7 +1130,7 @@ function syncDB(force, cb, tries) {
                })
     ;
 
-}
+};
 
 
 function placeValuesInStorage(data) {
@@ -1143,7 +1231,6 @@ function loadDashboardSettings (cb) {
                     }
 
                     sessionStorage.setItem((serverPrefix + servers[i].hostName), servers[i].id);
-                    sessionStorage.setItem((serverPrefix + servers[i].id + ':data'), JSON.stringify([]));
 
                     for (var j = 0; j < servers[i].groups.length; j++) {
 
@@ -1184,7 +1271,7 @@ function loadDashboardSettings (cb) {
             cb(false);
         }
     }
-}
+};
 
 
 function sortServers(servers) {

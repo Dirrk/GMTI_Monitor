@@ -92,15 +92,17 @@ function strictWrapper() {
     app.post('/api/data', api.data2);  // called to get data about groups of servers
     app.get('/api/data/:id', api.getData2); // called from built dashboards
 
+    app.get('/api/db/:id', api.getDB); // get all db info
+
+
+    // RESTful API
     app.get('/api/groups', api.groups); // called to get list of groups
     app.get('/api/servers', api.servers); // called to get list of servers
-    app.get('/api/dashboards', api.dashboards);
-    app.get('/api/db/:id', api.getDB);
+    app.get('/api/dashboards', api.dashboards); // called to get dashboards
 
-    app.all('/api/dashboard/:id', api.dashboard);
-    app.all('/api/server/:id', api.server);
-    app.all('/api/group/:id', api.group);
-
+    app.all('/api/dashboard/:id', api.dashboard); // called to get / update / delete / create dashboard
+    app.all('/api/server/:id', api.server); // called to get / update / delete / create server
+    app.all('/api/group/:id', api.group); // called to get / update / delete / create group
 
 
     app.get('/save', api.save); // called to initiate a save

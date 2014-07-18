@@ -351,12 +351,12 @@ function cleanUpData(cb) {
             {
                 if (temp[0].time <= (new Date().getTime() - 3600000))
                 {
-                    log.debug("Sending to archive");
+                    log.trace("Sending to archive");
                     var newArch = {
                         server: servers[i].server,
                         point: servers[i].data.shift()
                     };
-                    log.debug("Sending to archive: %j", newArch);
+                    log.trace("Sending to archive: %j", newArch);
                     toArchive.push(newArch);
 
                 } else {
@@ -372,7 +372,7 @@ function cleanUpData(cb) {
     if (toArchive.length > 0) {
 
         log.log("Archiving %d objects", toArchive.length);
-        log.debug("Archiving: %j", toArchive);
+        log.trace("Archiving: %j", toArchive);
 
         var archiveServers = [];
 
@@ -399,7 +399,7 @@ function cleanUpData(cb) {
 
 function archiveData(archiveServers, toArchive, cb) {
 
-    log.debug("archive data");
+    log.trace("archive data");
     if (!toArchive || toArchive.length === 0 || !archiveServers || archiveServers.length === undefined || archiveServers.length === null) {
 
         log.warn("ArchiveData failed because the variables were not ready");
@@ -408,8 +408,8 @@ function archiveData(archiveServers, toArchive, cb) {
 
     } else {
 
-        log.debug("Length: " + archiveServers.length);
-        log.debug("Incoming: %j", toArchive);
+        log.trace("Length: " + archiveServers.length);
+        log.trace("Incoming: %j", toArchive);
         var a = 0;
         var b = 0;
 
@@ -418,7 +418,7 @@ function archiveData(archiveServers, toArchive, cb) {
                          function (archivedServer, next) {
 
                              var found = [];
-                             log.debug("%s :: %s", (new Date()).toLocaleString(), archivedServer.server);
+                             log.trace("%s :: %s", (new Date()).toLocaleString(), archivedServer.server);
 
                              for (var j = 0; j < toArchive.length; j++)
                              {
@@ -426,7 +426,7 @@ function archiveData(archiveServers, toArchive, cb) {
 
                                      archivedServer.data.push(toArchive[j].point);
 
-                                     log.debug("Archived len=%d: " + archivedServer.server.toLowerCase() + " vs toArchive (%d): " + toArchive[j].server.toLowerCase() + " succeeded", archivedServer.data.length, j);
+                                     log.trace("Archived len=%d: " + archivedServer.server.toLowerCase() + " vs toArchive (%d): " + toArchive[j].server.toLowerCase() + " succeeded", archivedServer.data.length, j);
                                      a++;
 
                                      found.unshift(j);
@@ -435,12 +435,12 @@ function archiveData(archiveServers, toArchive, cb) {
                              if (found.length >= 0) { // was found
                                  // This accounts for multiple archives added from the same host.
 
-                                 log.debug("%s :: Before found Archive Length: %d",(new Date()).toLocaleString(), toArchive.length);
-                                 log.debug("Found: %d", found.length);
+                                 log.trace("%s :: Before found Archive Length: %d",(new Date()).toLocaleString(), toArchive.length);
+                                 log.trace("Found: %d", found.length);
                                  for (var h = 0; h < found.length; h++)
                                  {
                                      toArchive.splice(found[h], 1); // splice works on the archive
-                                     log.debug("After splice Archive Length: %d", toArchive.length);
+                                     log.trace("After splice Archive Length: %d", toArchive.length);
                                      b++;
                                  }
                                  setImmediate( function () {
@@ -565,7 +565,7 @@ function cleanUpArchiveLegacy(callback) {
 
                         if (archive[i].data[0].time < coldStorage[j].startEPOCH) { // data is older than we keep
 
-                            log.debug("Dropping old data from %s: %j",
+                            log.trace("Dropping old data from %s: %j",
                                       archive[i].server,
                                       archive[i].data.shift()
                             ); // drop data
@@ -580,7 +580,7 @@ function cleanUpArchiveLegacy(callback) {
                             );
 
                         } else {
-                            log.debug("Server: %s with oldest data point: %s is not older than %s",
+                            log.trace("Server: %s with oldest data point: %s is not older than %s",
                                       archive[i].server,
                                       (new Date(archive[i].data[0].time)).toLocaleString(),
                                       (new Date(coldStorage[j].endEPOCH)).toLocaleString()
@@ -800,7 +800,7 @@ function cleanUpArchive(callback) {
 
                         if (archive[i].data[0].time < coldStorage[j].startEPOCH) { // data is older than we keep
 
-                            log.debug("Dropping old data from %s: %j",
+                            log.trace("Dropping old data from %s: %j",
                                       archive[i].id,
                                       archive[i].data.shift()
                             ); // drop data
@@ -814,7 +814,7 @@ function cleanUpArchive(callback) {
                             );
 
                         } else {
-                            log.debug("Server: %d with oldest data point: %s is not older than %s",
+                            log.trace("Server: %d with oldest data point: %s is not older than %s",
                                       archive[i].id,
                                       (new Date(archive[i].data[0].time)).toLocaleString(),
                                       (new Date(coldStorage[j].endEPOCH)).toLocaleString()
@@ -983,7 +983,7 @@ function clearArchiveFromCurrent(toArchive) {
         }
     }
 
-    log.debug("Purge request sent %j", toPurge);
+    log.trace("Purge request sent %j", toPurge);
     _sock.emit('purge', toPurge);
 
 };
@@ -1136,7 +1136,7 @@ function cleanUpData2() {
 
 function archiveData2(toArchive) {
 
-    log.debug('toArchive %j', toArchive);
+    log.trace('toArchive %j', toArchive);
 
     if (toArchive && toArchive.length > 0) {
 
@@ -1149,7 +1149,7 @@ function archiveData2(toArchive) {
             if (err) {
                 log.error("Error handling archive", err);
             } else {
-                log.debug("Successfully merged archive");
+                log.trace("Successfully merged archive");
             }
         });
     }
@@ -1157,7 +1157,7 @@ function archiveData2(toArchive) {
 
 function handleMergingArchive(toMerge, next) {
 
-    log.debug("toMerge: %j", toMerge);
+    log.trace("toMerge: %j", toMerge);
 
     if (toMerge && toMerge.length && toMerge.length > 0 && toMerge[0].data && toMerge[0].data.length > 0) {
 
@@ -1374,7 +1374,7 @@ function readInJSON(fileName, cb) {
 // toArchive = [ { id: 1, point: { data }}, { id: 1, pint: { data1 }} ]
 function sortPointsAndSplit(toArchive) {
 
-    var ret = [],
+    var ret = [[]],
         oldestDate,
         newestDate;
 
@@ -1401,7 +1401,8 @@ function sortPointsAndSplit(toArchive) {
         } else {
 
             var currentNum = 0;
-            ret[currentNum].push([toArchive[i]])
+
+            ret[currentNum].push([toArchive[i]]);
             for (var i = 1; i < toArchive.length; i++) {
 
                 if (comparePointDates(oldestDate, toArchive[i].point.time) === false) {
@@ -1654,7 +1655,7 @@ function getFieldsFromDataTypes(dataTypes) {
 function constrainAndFilterData(timedData, start, end, dataTypes) {
 
 
-    log.debug("timedData: %j", timedData);
+    log.trace("timedData: %j", timedData);
 
     var first = findFirst(timedData, start);
     var last = findLast(timedData, first, end);

@@ -180,7 +180,7 @@ var getData = exports.getData = function getData(options, callback) {
 
         var options = options;
 
-        options.startTime = options.startTime || (new Date().getTime() - settings.currentLength || 360000);
+        options.startTime = options.startTime || (new Date().getTime() - settings.currentLength || 3600000);
         options.endTime = options.endTime || new Date().getTime();
 
 
@@ -196,13 +196,13 @@ var getData = exports.getData = function getData(options, callback) {
         // Required to send either servers[] or groups[]
         if (options.groups && options.groups.length > 0) {
 
-            log.debug("Required groups found");
+            log.trace("Required groups found");
             options.servers = getServersByGroup(_db.servers.slice(), options.groups);
             options.groups = getValuesById(_db.groups.slice(), options.groups);
 
 
         } else if (options.servers && options.servers.length > 0) {
-            log.debug("Required servers found");
+            log.trace("Required servers found");
             options.servers = getValuesById(_db.servers.slice(), options.servers);
             options.groups = getValuesById(_db.groups.slice(), getGroupIdsByServer(options.servers));
 
@@ -211,16 +211,16 @@ var getData = exports.getData = function getData(options, callback) {
             return;
         };
 
-        log.debug("Options after modification: %j", options);
+        log.trace("Options after modification: %j", options);
 
         getCurrentMatchingData(options, function getCurrentMatchingDataCallback(newOptions, existingData) {
 
             if (newOptions.more === false) {
-                log.debug("newOptions.more === false");
+                log.trace("newOptions.more === false");
                 callback(null, existingData);
             } else {
-                log.debug("newOptions %j", newOptions);
-                log.debug("existingData %j", existingData);
+                log.trace("newOptions %j", newOptions);
+                log.trace("existingData %j", existingData);
                 myController.getData(newOptions, existingData, callback);
             }
         });
@@ -336,7 +336,7 @@ function getCurrentMatchingData(options, next) {
 
     var data = filterDataByTimeAndDataTypes(newOptions.startTime, newOptions.endTime, getFieldsFromDataTypes(newOptions.dataTypes), _current.filter(function (curr) { return lookUp[curr.id]; } ));
 
-    log.debug("data: %j", data);
+    log.trace("data: %j", data);
 
 
     if (data.needMore === true && data.completedServerIds.length === newOptions.servers.length) {
@@ -356,8 +356,8 @@ function getCurrentMatchingData(options, next) {
 function filterDataByTimeAndDataTypes(start, end, dataTypes, input) {
 
 
-    log.debug("input: %j", input);
-    log.debug("start: %d  end: %d", start, end);
+    log.trace("input: %j", input);
+    log.trace("start: %d  end: %d", start, end);
 
     var start = start;
     var end = end;
@@ -371,7 +371,7 @@ function filterDataByTimeAndDataTypes(start, end, dataTypes, input) {
     for (var i = 0; i < input.length; i++) {
 
         var temp = constrainAndFilterData(sortDataByTime(input[i].data), start, end, dataTypes);
-        log.debug("Constrained: %j", temp);
+        log.trace("Constrained: %j", temp);
 
         if (temp.first > 0 || temp.first == input[i].data.length) {
 
@@ -397,8 +397,8 @@ function getFieldsFromDataTypes(dataTypes) {
 
 function constrainAndFilterData(timedData, start, end, dataTypes) {
 
-    log.debug("TimedData: %j", timedData);
-    log.debug("DataTypes: %j", dataTypes);
+    log.trace("TimedData: %j", timedData);
+    log.trace("DataTypes: %j", dataTypes);
 
     var first = findFirst(timedData, start);
     var last = findLast(timedData, first, end);
@@ -415,7 +415,7 @@ function constrainAndFilterData(timedData, start, end, dataTypes) {
 
 function cleanDataTypes(timedData, dataTypes) {
 
-    log.debug("Sliced Data: %j", timedData);
+    log.trace("Sliced Data: %j", timedData);
 
     return timedData.map(
         function (dataPoint) {
@@ -434,14 +434,14 @@ function cleanDataTypes(timedData, dataTypes) {
 
 function findFirst(timedData, start) {
 
-    log.debug("start: %d TimedData: %j", start, timedData);
+    log.trace("start: %d TimedData: %j", start, timedData);
     for (var i = 0; i < timedData.length && timedData[i].time < start;i++) {};
     return i;
 }
 
 function findLast(timedData, startAt, stop) {
 
-    log.debug("start: %d, stop: %d, TimedData: %j ", startAt, stop, timedData);
+    log.trace("start: %d, stop: %d, TimedData: %j ", startAt, stop, timedData);
     for (var i = startAt; i < timedData.length && timedData[i].time < stop;i++) {};
     return i;
 }

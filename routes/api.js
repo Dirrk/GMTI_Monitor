@@ -588,6 +588,7 @@ function handleDataRequest(options, res) {
 
 
 // This will do the post request for data where you send certain groups
+// DEPRECATED
 exports.data = function (req, res) {
 
     if (req.body.groups && util.isArray(req.body.groups)) {
@@ -617,7 +618,7 @@ exports.getData2 = function getData2(req, res) {
         var dashboard = getDashboardByUri(req.params.id);
 
         var options = {
-            startTime: new Date().getTime() - 900000,
+            startTime: new Date().getTime() - 1800000,
             endTime: new Date().getTime(),
             groups: dashboard.legacyGroups
         };
