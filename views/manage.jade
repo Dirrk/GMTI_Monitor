@@ -43,7 +43,7 @@ block append content
                                 tr(ng-repeat="server in servers | filter:$parent.searchText | orderBy:$parent.sortServers:$parent.reverse")
                                     td {{server.server}}
                                     td
-                                        select(ng-options="group.name for group in groups", ng-model="server.group", value="{{server.group}}", multiple)
+                                        select(ng-options="group.name for group in groups", ng-model="server.group", value="{{server.groups}}", multiple)
 
                                     td {{server.desc}}
                                     td
