@@ -90,7 +90,7 @@ exports.addServer = function (details, cb) {
         lastUpdate: 0,
         server: details.hostName
     };
-
+    log.debug("Add Server %j", aServer);
     myController.newServer(aServer, function(err, server) {
         if (err) {
             log.warn("Couldn't add server");
@@ -481,6 +481,7 @@ var getServerId = exports.getServerId = function getServerId(details) {
     }
 
     // Server not found
+    log.debug("Server not found in db %j", details);
     return null;
 
 };
@@ -510,6 +511,11 @@ exports.cleanConfig = function(cb) {
     if (settings.version && settings.version >= 1 && settings.dbFile) {
 
         _db = JSON.parse(fs.readFileSync(path.join(settings.dataDirectory, settings.dbFile), {encoding: 'utf8'}));
+        _db.servers = sortTableById(_db.servers);
+        _db.groups = sortTableById(_db.groups);
+        _db.dashboards = sortTableById(_db.dashboards);
+        _db.fronts = sortTableById(_db.fronts);
+        _db.dataTypes = sortTableById(_db.dataTypes);
         try {
             _current = JSON.parse(fs.readFileSync(path.join(settings.dataDirectory, settings.dataFile), {encoding: 'utf8'}));
         } catch (err) {
@@ -768,4 +774,110 @@ function sortDataByTime(data) {
     return data.sort(function (a, b) {
         return a.time - b.time;
     });
+};
+
+
+exports.modifyDB = function modifyDB(table, id, value) {
+
+    if (!(table && id && typeof id === 'number' && value)) {
+        return false;
+    }
+    var myTable;
+    switch (table) {
+
+        case 'dashboard':
+            myTable = _db.dashboards;
+            break;
+        case 'group':
+            myTable = _db.groups;
+            break;
+        case 'server':
+            myTable = _db.servers;
+            break;
+        case 'dataType':
+            myTable = _db.dataTypes;
+            break;
+        case 'front':
+            myTable = _db.fronts;
+            break;
+        default:
+            return false;
+    }
+    myTable = sortTableById(myTable);
+    if (id < 0) {
+        value.id = myTable[myTable.length - 1].id + 1;
+        myTable.push(JSON.parse(JSON.stringify(value)));
+        log.debug("Successfully added value to table %s:%d=%j",table, id, value);
+        dbChanged({ table: table, id: id, value: value });
+        return true;
+    }
+    for (var i = 0; i < myTable.length; i++){
+
+        if (id === myTable[i].id) {
+            myTable[i] = JSON.parse(JSON.stringify(value));
+            myTable[i].id = id; // Always ensure id stays the same
+            log.debug("Successfully updated table %s:%d=%j",table, id, value);
+            dbChanged({ table: table, id: id, value: value });
+            return true;
+        }
+    }
+    value.id = myTable[myTable.length - 1].id + 1;
+    myTable.push(JSON.parse(JSON.stringify(value)));
+    log.debug("Successfully added value to table %s:%d=%j",table, id, value);
+    dbChanged({ table: table, id: id, value: value });
+    return true;
+};
+
+function sortTableById(table) {
+
+  return table.sort(function (rowA, rowB) {
+       return rowA.id - rowB.id;
+  });
+
+};
+
+
+exports.removeFromDB = function deleteValue(table, id) {
+
+    if (!(table && id && typeof id === 'number')) {
+        return false;
+    }
+    var myTable;
+
+    switch (table) {
+
+        case 'dashboard':
+            myTable = _db.dashboards;
+            break;
+        case 'group':
+            myTable = _db.groups;
+            break;
+        case 'server':
+            myTable = _db.servers;
+            break;
+        case 'dataType':
+            myTable = _db.dataTypes;
+            break;
+        case 'front':
+            myTable = _db.fronts;
+            break;
+        default:
+            return false;
+    }
+    var index = -1;
+    for (var i = 0; i < myTable.length; i++){
+
+        if (id === myTable[i].id) {
+            log.debug("Found row to remove in table %s:%d=%j",table, id, myTable[i]);
+            index = i;
+            i = myTable.length;
+        }
+    }
+    if (index >= 0) {
+        myTable.splice(index,1);
+        _sock.emit("dbChanged", { table: table, id: -1*id });
+        return true;
+    } else {
+        return false;
+    }
 };

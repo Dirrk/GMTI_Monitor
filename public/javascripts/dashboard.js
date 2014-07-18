@@ -1046,9 +1046,9 @@ function safeHandler(dataId) {
     // No longer doing this.  Why because we want to remove the need to refresh or rebuild data?
     setTimeout(function() {
 
-        // location.reload(true);
+        location.reload(true);
 
-    }, 1800000);
+    }, 900000);
 };
 
 $("#pickFormat").change(function () {

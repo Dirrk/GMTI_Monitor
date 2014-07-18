@@ -18,7 +18,7 @@ manageApp.controller('manageCntrl', ['$scope', '$http',
        $scope.serverCreateName = undefined;
        $scope.serverEditGroup = undefined;
        $scope.createGroup = undefined;
-       $scope.sortServers = 'group';
+       $scope.sortServers = 'id';
        $scope.reverse = false;
 
        $scope.allDataReady = 0;
@@ -34,6 +34,9 @@ manageApp.controller('manageCntrl', ['$scope', '$http',
        ];
 
        $scope.taskSelected = $scope.serverTasks[0];
+
+       /**
+
 
        $http.get('/groups', {cache: false}).success(function(data) {
            $scope.groups = data;
@@ -52,6 +55,7 @@ manageApp.controller('manageCntrl', ['$scope', '$http',
            $scope.allDataReady++;
        });
 
+       */
        $scope.addServer = function () {
            var text = $("#serverSearch").val();
            showModal("#serverModal");
@@ -275,6 +279,7 @@ manageApp.controller('manageCntrl', ['$scope', '$http',
        }
        checkData();
        function fixDashboards() {
+
            console.log("Fix dashboards");
 
            // Dash-{{$parent.$index}}-selectedGroup-{{$index}}
@@ -285,13 +290,13 @@ manageApp.controller('manageCntrl', ['$scope', '$http',
                for (var j = 0; j < $scope.groups.length; j++)
                {
 
-                   for (var k = 0; k < $scope.dashboards[i].groups.length; k++)
+                   for (var k = 0; k < $scope.dashboards[i].legacyGroups.length; k++)
                    {
 
-                       if ($scope.dashboards[i].groups[k] == $scope.groups[j].id) {
+                       if ($scope.dashboards[i].legacyGroups[k] == $scope.groups[j].id) {
 
                            $("#Dash-" + i + "-selectedGroup-" + j).prop('checked', true);
-                           k = $scope.dashboards[i].groups.length;
+                           k = $scope.dashboards[i].legacyGroups.length;
                            console.log("#Dash-" + i + "-selectedGroup-" + j);
 
                        } else {
@@ -301,7 +306,147 @@ manageApp.controller('manageCntrl', ['$scope', '$http',
                }
            }
 
+           $scope.$apply();
+
        };
+
+       function syncDB(force, cb, tries) {
+
+           var dbVersion = localStorage.getItem("dbVersion");
+
+           if (force === true || dbVersion === null) {
+               dbVersion = 0;
+           }
+
+           var tries = tries || 0;
+
+           if (tries > 10) {
+               console.log("SyncDB did not succeed");
+               return;
+           }
+
+           $.get("/api/db/" + dbVersion)
+
+               .done( function (dbData) {
+
+                          if (dbData && dbData.version) {
+
+                              if (dbData.version == dbVersion) {
+                                  console.log("db has the correct version already");
+                                  getValuesFromStorage(cb);
+                              } else if (dbData.db) {
+
+                                  // should I clear this ?
+                                  localStorage.clear();
+                                  localStorage.setItem("dbVersion", dbData.version);
+                                  placeValuesInStorage(dbData.db);
+
+                                  if (cb && typeof cb === 'function') {
+                                      cb();
+                                  }
+
+                              } else {
+                                  console.log("ERROR :: This wasn't expected, check the url");
+                                  console.log(JSON.stringify(dbData));
+                                  setTimeout(function () {
+                                      syncDB(force, cb, tries + 1);
+                                  }, (tries * 2000));
+                              }
+
+                          } else {
+                              console.log("ERROR :: Data is not in correct format");
+                              setTimeout(function () {
+                                  syncDB(force, cb, tries + 1);
+                              }, (tries * 2000));
+                          }
+                      })
+               .fail( function () {
+                          console.log("Did not download database try number: " + tries);
+                          setTimeout(function () {
+                              syncDB(force, cb, tries + 1);
+                          }, (tries * 2000));
+                      })
+           ;
+           $scope.allDataReady = 3;
+
+       };
+
+       syncDB(false, fixDashboards);
+
+       /**
+        *  $scope.servers = [];
+        *  $scope.groups = [];
+        *  $scope.dashboards = [];
+        *
+        **/
+
+
+       function placeValuesInStorage(data) {
+
+           var dbServerPrefix = 'db:server:',
+               dbGroupPrefix = 'db:group:',
+               dbDashPrefix = 'db:dashboard:',
+               dbFrontsPrefix = 'db:front:',
+               dbDataTypesPrefix = 'db:dataTypes:';
+
+           $scope.servers = data.servers;
+           $scope.groups = data.groups;
+           $scope.dashboards = data.dashboards;
+
+           for (var i = 0; data.servers && data.servers.length && i < data.servers.length; i++) {
+               localStorage.setItem(dbServerPrefix + data.servers[i].id, JSON.stringify(data.servers[i]));
+           }
+
+           for (var i = 0; data.groups && data.groups.length && i < data.groups.length; i++) {
+               localStorage.setItem(dbGroupPrefix + data.groups[i].id, JSON.stringify(data.groups[i]));
+           }
+
+           for (var i = 0; data.dashboards && data.dashboards.length && i < data.dashboards.length; i++) {
+               localStorage.setItem(dbDashPrefix + data.dashboards[i].id, JSON.stringify(data.dashboards[i]));
+           }
+
+           for (var i = 0; data.fronts && data.fronts.length && i < data.fronts.length; i++) {
+               localStorage.setItem(dbFrontsPrefix + data.fronts[i].id, JSON.stringify(data.fronts[i]));
+           }
+
+           for (var i = 0; data.dataTypes && data.dataTypes.length && i < data.dataTypes.length; i++) {
+               localStorage.setItem(dbDataTypesPrefix + data.dataTypes[i].id, JSON.stringify(data.dataTypes[i]));
+           }
+
+
+
+       };
+
+       function getValuesFromStorage(cb) {
+
+           for ( var i = 0, len = localStorage.length; i < len; ++i ) {
+
+               if (localStorage.key(i).indexOf('db:server:') >= 0) {
+                   console.log(localStorage.key(i));
+                   $scope.servers.push(JSON.parse(localStorage.getItem(localStorage.key(i))));
+
+               } else if (localStorage.key(i).indexOf('db:group:') >= 0) {
+                   console.log(localStorage.key(i));
+                   $scope.groups.push(JSON.parse(localStorage.getItem(localStorage.key(i))));
+               } else if (localStorage.key(i).indexOf('db:dashboard:') >= 0) {
+                   console.log(localStorage.key(i));
+                   $scope.dashboards.push(JSON.parse(localStorage.getItem(localStorage.key(i))));
+               } else {
+                   console.log("Missed: " + localStorage.key(i));
+               }
+           }
+
+           console.log($scope.servers);
+           console.log($scope.dashboards);
+           console.log($scope.groups);
+           if (cb && typeof cb === 'function') {
+               cb();
+           }
+
+       };
+
+
+
 
        // DashCreate-selectedGroup-{{$index}}
        // .createDash()
@@ -463,6 +608,7 @@ function showNotification(msg, level) {
     setTimeout(function() {
         $("#notificationArea").hide();
     }, 3000);
-}
+};
+
 
 

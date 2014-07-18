@@ -390,7 +390,6 @@ exports.data2 = function (req, res) {
     }
 };
 
-
 function handleAverage(options, res) {
 
     log.debug("Options sent: %j", options);
@@ -408,12 +407,16 @@ function handleAverage(options, res) {
             log.debug("getData returned with data");
             ret = data;
         }
-        ret.averages = getAverageCalculations(ret);
+        var toSend = {
+            data: ret.data || [],
+            averages: {}
+        };
+        toSend.averages = getAverageCalculations(ret);
         log.debug("getAverageCalcs returned with data");
-        res.json(ret);
+        res.json(toSend);
     });
 
-}
+};
 
 /***
  *
@@ -584,7 +587,7 @@ function handleDataRequest(options, res) {
         res.json(ret.data);
     });
 
-}
+};
 
 
 // This will do the post request for data where you send certain groups
@@ -919,9 +922,8 @@ exports.group = function group(req, res) {
 
 exports.getArchive = function (req, res) {
 
-    res.status(401).send("This is no longer supported");
-    var db = nconf.get('archive');
-    res.json(db);
+    res.status(401).send("This has been deprecated");
+    return;
 
 };
 

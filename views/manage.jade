@@ -36,16 +36,16 @@ block append content
                             thead
                                 th.clickable(ng-click="$parent.sortServers = 'server'; $parent.reverse=!reverse") Server Name
                                 th.clickable(ng-click="$parent.sortServers = 'group'; $parent.reverse=!reverse") Group
-                                th.clickable(ng-click="$parent.sortServers = 'lastUpdate'; $parent.reverse=!reverse") Activity
+                                th.clickable(ng-click="$parent.sortServers = 'desc'; $parent.reverse=!reverse") Description
                                 th.clickable(ng-click="$parent.sortServers = 'selected'; $parent.reverse=!reverse") Options
 
                             tbody
                                 tr(ng-repeat="server in servers | filter:$parent.searchText | orderBy:$parent.sortServers:$parent.reverse")
                                     td {{server.server}}
                                     td
-                                        select(ng-options="group.name for group in groups", ng-model="server.group", value="{{server.group}}")
+                                        select(ng-options="group.name for group in groups", ng-model="server.group", value="{{server.group}}", multiple)
 
-                                    td {{server.lastUpdate}}
+                                    td {{server.desc}}
                                     td
                                         .spaceout
                                             input(type="checkbox", ng-model="server.selected")

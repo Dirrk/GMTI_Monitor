@@ -52,6 +52,7 @@ function strictWrapper() {
     var dashboard = require('./routes/dashboard');
     var api = require('./routes/api');
     var report = require('./routes/report');
+    var manage = require('./routes/manage');
     // var derek = require('./routes/derek');
 
     // Required
@@ -85,32 +86,35 @@ function strictWrapper() {
     // ***  Routes  ***
     //      * index main pages
     app.get('/', routes.index);
-    app.get('/manage', checkAuth, routes.manage); // setup later
+    app.get('/manage', checkAuth, manage.index); // setup later
 
-    //      * api calls
+    // *** API Calls ***
     app.post('/api/update', api.update2);  // Servers send data
     app.post('/api/data', api.data2);  // called to get data about groups of servers
+
+    // *** Legacy Dashboard call ***
     app.get('/api/data/:id', api.getData2); // called from built dashboards
 
-    app.get('/api/db/:id', api.getDB); // get all db info
+    app.get('/api/db/:id', api.getDB); // get all db info by version
 
 
-    // RESTful API
-    app.get('/api/groups', api.groups); // called to get list of groups
-    app.get('/api/servers', api.servers); // called to get list of servers
-    app.get('/api/dashboards', api.dashboards); // called to get dashboards
+    // *** RESTful API ***
+    app.get('/api/groups', manage.groups); // called to get list of groups
+    app.get('/api/servers', manage.servers); // called to get list of servers
+    app.get('/api/dashboards', manage.dashboards); // called to get dashboards
 
-    app.all('/api/dashboard/:id', api.dashboard); // called to get / update / delete / create dashboard
-    app.all('/api/server/:id', api.server); // called to get / update / delete / create server
-    app.all('/api/group/:id', api.group); // called to get / update / delete / create group
+    app.all('/api/dashboard/:id', manage.dashboard); // called to get / update / delete / create dashboard
+    app.all('/api/server/:id', manage.server); // called to get / update / delete / create server
+    app.all('/api/group/:id', manage.group); // called to get / update / delete / create group
 
 
     app.get('/save', api.save); // called to initiate a save
     app.get('/reload', api.reload); // called to initiate a save
 
-    app.post('/manage', checkAuth, api.manage); // save manage stuff
-    app.post('/servers/create', checkAuth, api.createServer); // create server (maybe put this back into manage)
 
+    // Legacy not restful
+    app.post('/servers/create', checkAuth, api.createServer); // create server (maybe put this back into manage)
+    app.post('/manage', checkAuth, api.manage); // save manage stuff
     app.post('/manage/server', checkAuth, api.manageServer); // manage server
     app.post('/manage/group', checkAuth, api.manageGroup); // manage server
     app.post('/manage/dash', checkAuth, api.manageDash); // manage server

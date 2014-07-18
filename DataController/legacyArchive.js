@@ -1596,7 +1596,7 @@ function finalizeDataJobs(options, currentData, archivedData, cb) {
     var combinedData = [];
     var archivedData = archivedData || [];
 
-    log.debug("currentData: %j", currentData);
+    log.trace("currentData: %d", currentData.length);
     log.debug("archivedData: %j", archivedData);
 
     while (archivedData.length > 0) {
@@ -1605,7 +1605,7 @@ function finalizeDataJobs(options, currentData, archivedData, cb) {
     }
 
     var out = sortedMergeServers(filterDataByTimeAndDataTypes(start, end, dataTypes, combinedData).data, sortServerById(currentData));
-    log.debug("Out: %j", out);
+    log.trace("Out: %j", out);
     cb(out);
 
 }
