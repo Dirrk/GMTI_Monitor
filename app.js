@@ -21,7 +21,7 @@ var settings = require('./settings.json') || {
 };
 
 var easylogger = require('easy-logger');
-var log = easylogger.startGlobal({level: 1});
+var log = easylogger.startGlobal({level: settings.loglevel});
 log.log("Attempting to start slave process pid: %d", process.pid);
 
 
