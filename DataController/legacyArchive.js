@@ -1157,9 +1157,13 @@ function archiveData2(toArchive) {
 
 function handleMergingArchive(toMerge, next) {
 
-    log.trace("toMerge: %j", toMerge);
+    log.debug("toMerge: %j", toMerge);
 
     if (toMerge && toMerge.length && toMerge.length > 0 && toMerge[0].data && toMerge[0].data.length > 0) {
+
+        log.debug("currentMerge: %j", toMerge[0]);
+        log.debug("currentData: %j", toMerge[0].data[0]);
+        var curPoint = toMerge[0].data[0];
 
         var outFile = path.join(settings.dataDirectory, getArchiveFileName(toMerge[0].data[0].time || new Date().getTime()));
 
@@ -1185,6 +1189,7 @@ function handleMergingArchive(toMerge, next) {
             });
 
         });
+
 
     } else {
         next();
@@ -1378,7 +1383,6 @@ function sortPointsAndSplit(toArchive) {
         oldestDate,
         newestDate;
 
-
     if (toArchive.length && toArchive.length > 0) {
 
         // Sorted By Time
@@ -1386,10 +1390,13 @@ function sortPointsAndSplit(toArchive) {
             return a.point.time - b.point.time;
         });
 
+        log.debug("toArchive: %j", toArchive);
+
         try {
 
             oldestDate = toArchive[0].point.time;
             newestDate = toArchive[toArchive.length - 1].point.time;
+            log.debug("Oldest: %d, Newest: %d", oldestDate, newestDate);
 
         } catch (e) {
             log.error("Invalid point or times %j", toArchive);
@@ -1402,7 +1409,8 @@ function sortPointsAndSplit(toArchive) {
 
             var currentNum = 0;
 
-            ret[currentNum].push([toArchive[i]]);
+            ret = [[toArchive[0]]];
+
             for (var i = 1; i < toArchive.length; i++) {
 
                 if (comparePointDates(oldestDate, toArchive[i].point.time) === false) {
@@ -1416,6 +1424,7 @@ function sortPointsAndSplit(toArchive) {
                     ret[currentNum].push(toArchive[i]);
                 }
             }
+            log.debug("beforeMerge: %j", ret);
             return mergePoints(ret);
         }
 

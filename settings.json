@@ -7,7 +7,7 @@
     "archiveFile": "archive.json",
     "tempArchiveLength": 1,
     "archiveDays": 14,
-    "loglevel": 3,
+    "loglevel": 1,
     "dev": false,
     "mysql": {
         "host": "192.168.1.35",
