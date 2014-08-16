@@ -90,7 +90,7 @@ exports.addServer = function (details, cb) {
         lastUpdate: 0,
         server: details.hostName
     };
-    log.debug("Add Server %j", aServer);
+    log.debug("Adding Server %j", aServer);
     myController.newServer(aServer, function(err, server) {
         if (err) {
             log.warn("Couldn't add server");
@@ -461,20 +461,20 @@ function makeLookUpKey(values) {
 
 var getServerId = exports.getServerId = function getServerId(details) {
 
-    log.trace("Details: %j", details);
+    log.debug("Details: %j", details);
 
     // settings.recognizeByOrder default ['hostName', 'ip']
-    var recognizedOrder = settings.recognizeByOrder || ['hostName', 'ip'];
+    var recognizedOrder = settings.recognizeByOrder || ['hostName'];
     log.trace("recognizedOrder = %j", recognizedOrder);
 
     for (var i = 0; i < _db.servers.length; i++)
     {
-
         for (var k = 0; k < recognizedOrder.length; k++)
         {
+            log.trace("Identifier: %s", recognizedOrder[k]);
             if (details[recognizedOrder[k]] === _db.servers[i][recognizedOrder[k]] && (details[recognizedOrder[k]] !== '' && details[recognizedOrder[k]] != undefined))
             {
-                log.trace("Found: %d", _db.servers[i].id);
+                log.debug("Found: %j", _db.servers[i]);
                 return _db.servers[i].id;
             }
         }

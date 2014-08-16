@@ -20,7 +20,7 @@
         "waitForConnections": true
     },
     "controller": "legacyArchive",
-    "recognizeByOrder": ["hostName", "ip"],
+    "recognizeByOrder": ["hostName"],
     "legacySettings": {
         "currentLength": 3600000,
         "currentCleanupFrequency": 120000,

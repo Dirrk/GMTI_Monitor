@@ -208,18 +208,22 @@ exports.update2 = function update2(req, res) {
     var dataTypes = controller.db().dataTypes;
 
     var keys = Object.keys(req.body);
+    log.trace("Keys: %j", keys);
     for (var i = 0; i < keys.length; i++)
     {
         for (var j = 0; j < dataTypes.length; j++)
         {
             if (keys[i] == dataTypes[j].field) {
+                log.trace("Found field: %s", keys[i]);
                 values[dataTypes[j].field] = req.body[keys[i]];
             }
         }
-        if (keys[i] == 'server' || keys[i] == 'host') {
+        if (keys[i] === 'server' || keys[i] === 'host') {
             details.hostName = req.body.server || req.body.host;
-        } else if (keys[i] == 'id') {
+            log.trace("Found server: %s", details.hostName);
+        } else if (keys[i] === 'id') {
             details.id = req.body.id;
+            log.trace("Found id: %d", details.id);
         }
     }
     details.ip = req.ip;
@@ -251,16 +255,17 @@ exports.getDB = function getDB(req, res) {
 
 function addServerData2(details, values) {
 
-    values.time = new Date().getTime();
     details.id = controller.getServerId(details);
+    log.trace("Details: %j", details);
+    log.trace("Values: %j", values);
 
     if (details.id != null)
     {
-        log.trace("Adding new data for existing server");
+        log.debug("Adding new data for existing server %s", details.hostName);
         controller.addDataToServer(details.id, values);
 
     } else {
-
+        log.debug("Found new server %j", details);
         controller.addServer(details, function(newServer) {
 
             controller.addDataToServer(newServer.id, values);
