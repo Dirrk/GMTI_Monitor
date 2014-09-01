@@ -261,7 +261,7 @@ function addServerData2(details, values) {
 
     if (details.id != null)
     {
-        log.debug("Adding new data for existing server %s", details.hostName);
+        log.trace("Adding new data for existing server %s", details.hostName);
         controller.addDataToServer(details.id, values);
 
     } else {

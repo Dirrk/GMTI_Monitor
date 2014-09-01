@@ -16,34 +16,190 @@ var controller = require('../DataController/controller');
 // manage
 exports.index = function (req, res) {
 
-    res.render('manage');
+    res.render('manage2');
 
 };
 
 // /api/groups
 exports.groups = function (req, res) {
 
-    res.json(controller.db().groups);
+    var start = 0;
+    start = req.param('start') || -1;
+    if (start === -1) {
+        res.json(
+
+            {
+                groups: controller.db().groups
+            }
+        );
+        return;
+    }
+
+    var groups = controller.db().groups;
+    var total = groups.length;
+    if (start < groups.length) {
+
+        var ret = [];
+        for (var i = 0; i < groups.length && ret.length < 10; i++) {
+
+            if (groups[i].id >= start) {
+                ret.push(groups[i]);
+            }
+        }
+        res.json({
+                     groups: ret,
+                     total: total
+                 });
+
+    } else {
+        res.json(controller.db().groups);
+    }
+
 };
 
 // /api/servers
 exports.servers = function (req, res) {
 
-    res.json(controller.db().servers);
+    var start = 0;
+    start = req.param('start') || -1;
+    if (start === -1) {
+        res.json(
+
+            {
+                servers: controller.db().servers
+            }
+        );
+        return;
+    }
+
+
+    var servers = controller.db().servers;
+    var total = servers.length;
+    if (start < servers.length) {
+
+        var ret = [];
+        for (var i = 0; i < servers.length && ret.length < 10; i++) {
+
+            if (servers[i].id >= start) {
+                ret.push(servers[i]);
+            }
+        }
+        res.json({
+                     servers: ret,
+                     total: total
+                 });
+
+    } else {
+        res.json(controller.db().servers);
+    }
 };
 
 // /api/dashboards
 exports.dashboards = function (req, res) {
-    res.json(controller.db().dashboards);
+    var start = 0;
+    start = req.param('start') || -1;
+    if (start === -1) {
+        res.json(
+
+            {
+                dashboards: controller.db().dashboards
+            }
+        );
+        return;
+    }
+
+    var dashboards = controller.db().dashboards;
+    var total = dashboards.length;
+    if (start < dashboards.length) {
+
+        var ret = [];
+        for (var i = 0; i < dashboards.length && ret.length < 10; i++) {
+
+            if (dashboards[i].id >= start) {
+                ret.push(dashboards[i]);
+            }
+        }
+        res.json({
+                     dashboards: ret,
+                     total: total
+                 });
+
+    } else {
+        res.json(controller.db().dashboards);
+    }
+
 };
 // /api/dataTypes
 exports.dataTypes = function (req, res) {
-    res.json(controller.db().dataTypes);
+
+    var start = 0;
+    start = req.param('start') || -1;
+    if (start === -1) {
+        res.json(
+            {
+                dataTypes: controller.db().dataTypes
+            }
+        );
+        return;
+    }
+
+    var dataTypes = controller.db().dataTypes;
+    var total = dataTypes.length;
+    if (start < dataTypes.length) {
+
+        var ret = [];
+        for (var i = 0; i < dataTypes.length && ret.length < 10; i++) {
+
+            if (dataTypes[i].id >= start) {
+                ret.push(dataTypes[i]);
+            }
+        }
+        res.json({
+                     dataTypes: ret,
+                     total:     total
+                 }
+        );
+
+    } else {
+        res.json(controller.db().dataTypes);
+
+    }
 };
 
 // /api/fronts
 exports.fronts = function (req, res) {
-    res.json(controller.db().fronts);
+
+    var start = 0;
+    start = req.param('start') || -1;
+    if (start === -1) {
+        res.json(
+
+            {
+                fronts: controller.db().fronts
+            }
+        );
+        return;
+    }
+
+    var fronts = controller.db().fronts;
+    var total = fronts.length;
+    if (start < fronts.length) {
+
+        var ret = [];
+        for (var i = 0; i < fronts.length && ret.length < 10; i++) {
+
+            if (fronts[i].id >= start) {
+                ret.push(fronts[i]);
+            }
+        }
+        res.json({
+                     fronts: ret,
+                     total: total
+                 });
+
+    } else {
+        res.json(controller.db().fronts);
+    }
 };
 
 
@@ -264,6 +420,7 @@ exports.dashboard = function dashboard(req, res) {
             res.send(401);
     }
 };
+
 function findDashboard(id) {
 
     var dashboards = controller.db().dashboards;
@@ -358,6 +515,8 @@ function updateDashboard(res, id, body) {
     }
 
 };
+
+// TODO add return dashboard
 function addDashboard(res, id, body) {
 
     var dashboard = {};
@@ -394,6 +553,7 @@ function deleteDashboard(res, id) {
     }
 
 };
+
 
 exports.server = function server(req, res) {
 
@@ -471,6 +631,10 @@ function updateServer(res, id, body) {
         server.groups = body.groups || server.groups || [];
         server.server = body.server || server.server;
 
+        for (var i = 0; i < server.groups.length; i++) {
+            server.groups[i] = server.groups[i] * 1;
+        }
+
         if (controller.modifyDB('server', server.id, server)) {
             res.send(200);
         } else {
@@ -482,6 +646,8 @@ function updateServer(res, id, body) {
     }
 
 };
+
+// Return id
 function addServer(res, id, body) {
 
     var server = {};
@@ -501,6 +667,7 @@ function addServer(res, id, body) {
         res.send(500);
     }
 };
+
 function deleteServer(res, id) {
 
     var server = findServer(id);
@@ -591,7 +758,7 @@ function updateGroup(res, id, body) {
         group.desc = body.desc || group.desc;
 
         if (controller.modifyDB('group', group.id, group)) {
-            res.send(200);
+            res.json(group);
         } else {
             res.send(500);
         }
@@ -601,6 +768,8 @@ function updateGroup(res, id, body) {
     }
 
 };
+
+// send id
 function addGroup(res, id, body) {
 
     var group = {};
@@ -615,6 +784,7 @@ function addGroup(res, id, body) {
         res.send(500);
     }
 };
+
 function deleteGroup(res, id) {
 
     var group = findGroup(id);

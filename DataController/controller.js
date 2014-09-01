@@ -461,7 +461,7 @@ function makeLookUpKey(values) {
 
 var getServerId = exports.getServerId = function getServerId(details) {
 
-    log.debug("Details: %j", details);
+    log.trace("Details: %j", details);
 
     // settings.recognizeByOrder default ['hostName', 'ip']
     var recognizedOrder = settings.recognizeByOrder || ['hostName'];
@@ -474,7 +474,7 @@ var getServerId = exports.getServerId = function getServerId(details) {
             log.trace("Identifier: %s", recognizedOrder[k]);
             if (details[recognizedOrder[k]] === _db.servers[i][recognizedOrder[k]] && (details[recognizedOrder[k]] !== '' && details[recognizedOrder[k]] != undefined))
             {
-                log.debug("Found: %j", _db.servers[i]);
+                log.trace("Found: %j", _db.servers[i]);
                 return _db.servers[i].id;
             }
         }
@@ -823,7 +823,7 @@ exports.modifyDB = function modifyDB(table, id, value) {
     }
     value.id = myTable[myTable.length - 1].id + 1;
     myTable.push(JSON.parse(JSON.stringify(value)));
-    log.debug("Successfully added value to table %s:%d=%j",table, id, value);
+    log.debug("Successfully added value to table %s:%d=%j", table, id, value);
     dbChanged({ table: table, id: id, value: value });
     return true;
 };

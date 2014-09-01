@@ -1,0 +1,103 @@
+//
+   Created by Dirrk on 8/16/2014.
+
+html
+head
+    //
+        link(rel='shortcut icon', href='../../assets/ico/favicon.ico')
+    title Manage Server
+    //
+       Bootstrap core CSS
+    link(href='/bootstrap/css/bootstrap.min.css', rel='stylesheet')
+    link(href='/chosen/chosen.css', rel='stylesheet')
+    link(href='/stylesheets/dashboard.css', rel='stylesheet')
+    link(href='/stylesheets/manage2.css', rel='stylesheet')
+    link(href='/stylesheets/bootstrap-select.css', rel='stylesheet')
+    body
+        .navbar.navbar-inverse.navbar-static-top(role='navigation')
+            .container-fluid
+                .navbar-header
+                    a.navbar-brand(href='/', style="color: #00B7FF;") GMTI
+                .navbar-collapse.collapse
+                    ul.nav.navbar-nav.navbar-right
+                        li
+                            a(href='/') Dashboards
+                        li
+                            a(href='/manage', style="color: #FFFFFF;") Manage
+
+        .container-fluid.main
+            ul#mainTabs.nav.nav-tabs(role="tablist")
+                li.active
+                    a(href="#servers", role="tab", data-toggle="tab") Servers
+
+                li
+                    a(href="#groups", role="tab", data-toggle="tab") Groups
+
+                li
+                    a(href="#dashboards", role="tab", data-toggle="tab") Dashboards
+
+            #mainTabsContent.tab-content(role="tab-content")
+                #servers.tab-pane.fade.in.active
+                    .container-fluid
+                        #innerTabservers.row.needHeadRoom
+                            .row-fluid
+                                #serverspin.col-md-4.col-md-offset-4
+                            .row-fluid
+                                .col-md-10
+                                    table.table
+                                        tr
+                                            td
+                                                label Hostname:
+                                            td
+                                                input#serverHostName(type="text")
+                                            td
+                                                label Description:
+                                            td
+                                                input#serverDescription(type="text")
+                                            td
+                                                label Groups
+                                            td
+                                                select#server-groups-new.selectpicker(multiple data-selected-text-format="count>2")
+                                            td
+                                                label IP:
+                                            td
+                                                input#serverIP(type="text")
+                                            td
+                                                button Create
+
+                            .row-fluid
+                                .col-md-11
+                                    table#serverTable.table.table-condensed.table-bordered
+                                        thead
+                                            th id
+                                            th Hostname
+                                            th Description
+                                            th Groups
+                                            th IP
+                                            th Control
+                                        tbody#serverBody
+
+
+
+
+
+
+
+                        
+                #groups.tab-pane.fade
+                    p Hello Groups
+                #dashboards.tab-pane.fade
+                    p Hello Dash
+
+
+        script(src='/javascripts/flot/jquery.min.js')
+        script(src='/bootstrap/js/bootstrap.min.js')
+        script(src='/chosen/chosen.jquery.min.js')
+        script(src='/javascripts/bootstrap-select.js')
+        script(src='/javascripts/handlebars/handlebars.js')
+        script(src='/javascripts/spin.min.js')
+        script(src='/javascripts/custom/manage.js')
+        script(id="serverRows", type="text/x-handlebars-template")
+            <tr id="server-row-{{id}}"><td>{{id}}</td><td>{{hostName}}</td><td><input type="text" id="server-desc-{{id}}" value="{{desc}}"></td><td><select id="server-groups-{{id}}" class="selectpicker" multiple data-selected-text-format="count>2">{{#each groups}}<option>{{this}}</option>{{/each}}</select></td><td><input type="text" id="server-ip-{{id}}" value="{{ip}}"></td><td><button onclick="serverSave({{id}})"><span class="glyphicon glyphicon-floppy-disk"></span></button><button onclick="serverDelete({{id}})"><span class="glyphicon glyphicon-trash"></span></button></td></tr>
+
+
