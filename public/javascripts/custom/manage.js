@@ -7,8 +7,12 @@ var ServerPage = {
     numResults: 0,
     curPage: 1,
     curIndex: 0,
+    curLastIndex: 0,
     numPages: function () {
         return Math.ceil(this.numResults / 10);
+    },
+    toPageString: function () {
+      return "Page " + this.curPage + " of " + this.numPages();
     }
 };
 
@@ -41,7 +45,7 @@ function loadServerTab(lastIndex) {
 
     var lastIndex = lastIndex || ServerPage.curIndex || 0;
 
-    $.get("/api/servers").done(
+    $.get("/api/servers", { start: 0 }).done(
         function (data) {
             ServerPage.curIndex = lastIndex;
             if (data && data.servers && data.servers.length) {
@@ -52,11 +56,19 @@ function loadServerTab(lastIndex) {
                     ServerPage.numResults = data.servers.length;
                 }
 
+                $("#serverPageInfo").text(ServerPage.toPageString());
+
                 serverViewLoad(data.servers);
             }
         });
 }
 
+
+function changePage(num) {
+
+
+
+}
 
 function serverViewLoad(servers) {
 

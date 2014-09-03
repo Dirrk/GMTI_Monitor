@@ -64,6 +64,16 @@ head
                                                 input#serverIP(type="text")
                                             td
                                                 button Create
+                            .row-fluid
+                                .col-md-11
+                                    ul.pager
+                                        li.previous.disabled(onclick="changePage(-1)")
+                                            span.glyphicon.glyphicon-chevron-left
+                                        li
+                                            span#serverPageInfo Page X of Y
+                                        li.next(onclick="changePage(1)")
+                                           span.glyphicon.glyphicon-chevron-right
+
 
                             .row-fluid
                                 .col-md-11
