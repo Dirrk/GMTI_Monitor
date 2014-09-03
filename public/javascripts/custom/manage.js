@@ -13,7 +13,8 @@ var ServerPage = {
     },
     toPageString: function () {
       return "Page " + this.curPage + " of " + this.numPages();
-    }
+    },
+    topOfPage: [0, 0]
 };
 
 var GroupPage = {
@@ -45,7 +46,7 @@ function loadServerTab(lastIndex) {
 
     var lastIndex = lastIndex || ServerPage.curIndex || 0;
 
-    $.get("/api/servers", { start: 0 }).done(
+    $.get("/api/servers", { start: lastIndex }).done(
         function (data) {
             ServerPage.curIndex = lastIndex;
             if (data && data.servers && data.servers.length) {
@@ -55,6 +56,14 @@ function loadServerTab(lastIndex) {
                 } else {
                     ServerPage.numResults = data.servers.length;
                 }
+
+                try {
+                    ServerPage.curLastIndex = data.servers[data.servers.length - 1].id;
+                    ServerPage.topOfPage[ServerPage.curPage] = data.servers[0].id;
+                } catch (ex) {
+                    console.log(ex);
+                }
+
 
                 $("#serverPageInfo").text(ServerPage.toPageString());
 
@@ -66,7 +75,15 @@ function loadServerTab(lastIndex) {
 
 function changePage(num) {
 
+    if (num > 0 && ServerPage.curPage < ServerPage.numPages()) {
 
+        ServerPage.curPage = ServerPage.curPage + 1;
+        loadServerTab(ServerPage.curLastIndex + 1);
+
+    } else if (num < 0 && ServerPage.curPage > 1) {
+        ServerPage.curPage = ServerPage.curPage - 1;
+        loadServerTab(ServerPage.topOfPage[ServerPage.curPage]);
+    }
 
 }
 
@@ -104,6 +121,18 @@ function serverViewLoad(servers) {
             $("#server-groups-" + server.id).selectpicker('val', tempGroups);
         });
     });
+
+    if (ServerPage.curIndex === 0) {
+        $(".pager .previous").addClass("disabled");
+    } else {
+        $(".pager .previous").removeClass("disabled");
+    }
+    if (ServerPage.curPage === ServerPage.numPages()) {
+        $(".pager .next").addClass("disabled");
+    } else {
+        $(".pager .next").removeClass("disabled");
+    }
+
 
     console.log("Number of pages " + ServerPage.numPages());
 }

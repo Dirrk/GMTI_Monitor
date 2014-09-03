@@ -75,7 +75,7 @@ exports.servers = function (req, res) {
 
     var servers = controller.db().servers;
     var total = servers.length;
-    if (start < servers.length) {
+    if (start < servers[servers.length - 1].id) {
 
         var ret = [];
         for (var i = 0; i < servers.length && ret.length < 10; i++) {
