@@ -215,6 +215,7 @@ exports.update2 = function update2(req, res) {
         {
             if (keys[i] == dataTypes[j].field) {
                 log.trace("Found field: %s", keys[i]);
+                // TODO add in dataTypes[j] conversions
                 values[dataTypes[j].field] = req.body[keys[i]];
             }
         }
@@ -227,8 +228,12 @@ exports.update2 = function update2(req, res) {
         }
     }
     details.ip = req.ip;
-
     res.send(200);
+
+    if (details.id == 0 && (details.hostName == null || keys.length == 0 || details.hostName == "")) {
+        log.debug("Throwing this data away %j from %j", values, details);
+        return;
+    }; // Not adding anything if there is no hostname
 
     log.trace("Details: %j", details);
     log.trace("Values: %j", values);
@@ -261,11 +266,11 @@ function addServerData2(details, values) {
 
     if (details.id != null)
     {
-        log.trace("Adding new data for existing server %s", details.hostName);
+        log.debug("Adding new data for existing server %s", details.hostName);
         controller.addDataToServer(details.id, values);
 
     } else {
-        log.debug("Found new server %j", details);
+        log.info("Found new server %j", details);
         controller.addServer(details, function(newServer) {
 
             controller.addDataToServer(newServer.id, values);

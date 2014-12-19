@@ -48,8 +48,9 @@ $("#genButton").click(function() {
         servers: servers
     }).success(function(data) {
 
-        _data = data.data;
+        _data = legacyFix(data.data);
         var fl = new FlotHelper();
+
         fl.loadMultiServerTimeGraph("#timechart", _data, dataTypes, { start: startDate, end: endDate});
         // #timechart
 
@@ -83,7 +84,48 @@ $("#genButton").click(function() {
             fl.loadMultiServerTimeGraph("#timechart", _data, dataTypes, { start: vals.values.min, end: vals.values.max});
         });
     });
-
-
-
 });
+
+
+function legacyFix(inData) {
+
+    if (inData && inData.length) {
+
+        var ret = inData.slice();
+
+        for (var i = 0; i < ret.length; i++) {
+
+            if (inData[i].id && localStorage.getItem("db:server:" + inData[i].id)) {
+
+                ret[i].server = JSON.parse(localStorage.getItem("db:server:" + inData[i].id)).name;
+
+            } else {
+
+                i = ret.length; // stop parsing this shit
+                syncDB();
+                return [];
+                ret[i].server = "unknown-" + inData[i].id || i;
+                console.log("LegacyFix :: Added unknown server should I have downloaded this data instead?");
+
+            }
+            // console.log("LegacyFixed " + ret[i].server);
+        }
+        importCurrentData(inData);
+        return ret;
+
+    } else {
+        return [];
+    }
+};
+
+function importCurrentData(inData) {
+
+    for(var i = 0; inData && inData.length && i < inData.length; i++) {
+
+        if (inData[i].id) {
+            sessionStorage.setItem("server:" + inData[i].id + ":data", JSON.stringify(inData[i].data || []));
+        } else {
+            console.log("Data did not contain an ID!!!!! inData[" + i+ "] = " + JSON.stringify(inData[i]));
+        }
+    }
+};

@@ -25,7 +25,6 @@ exports.report = function(req, res) {
             } else {
                 numEnd = new Date().getTime();
             }
-
             end = new Date(0);
             end.setUTCMilliseconds(numEnd);
 
@@ -51,27 +50,37 @@ exports.report = function(req, res) {
 
     log.log("Starting report for: " + numStart + " - " + numEnd);
 
-    var reportData = [];
-    var servers = combinedServers(req.body);
-    for (var i = 0; i < servers.length; i++) {
+    var servers = getServerIds(req.body.servers);
+    var config = {
+        startTime: numStart,
+        endTime: numEnd,
+        servers: servers
+    };
+    controller.getData(config, function (err, reportData) {
 
-        reportData.push({
-            server: servers[i].server,
-            data: []
-        });
+        if (err) {
+            res.send(err);
+        } else {
 
-        for (var j = 0; j < servers[i].data.length; j++) {
-
-            if (servers[i].data[j].time >= numStart && servers[i].data[j].time < numEnd)
+            if (true/* req.param('json') == 1 */)
             {
-                // log.log("Adding data");
-                reportData[i].data.push(servers[i].data[j]);
+                log.debug("Report output: %j", reportData);
+                res.json(
+                    {
+                        start: numStart,
+                        end: numEnd,
+                        data: reportData.data
+                    }
+                );
             } else {
-                // log.log("Invalid time: " + servers[i].data[j].time);
+                res.render('report', output);
             }
-        }
-    }
 
+        }
+    });
+
+
+    /*
     var toRemove = [];
     for (var i = 0; i < reportData.length; i++) {
 
@@ -113,6 +122,7 @@ exports.report = function(req, res) {
         }
     }
 
+
     // res.write('Start: ' + start.toTimeString());
     // res.write('End: ' + end.toTimeString());
     var output = {
@@ -120,25 +130,22 @@ exports.report = function(req, res) {
         end: end.toDateString() + " " + end.toTimeString(),
         data: sortServers(reportData)
     };
-
-    if (req.param('json') == 1)
-    {
-        log.log("Output: %j", output.data);
-        try {
-            res.json(output);
-        } catch (e) {
-            log.log(e);
-            try {
-                res.send(500);
-            } catch (ignore) {
-                log.log("Couldn't send 500 it was already sent");
-            }
-        }
-
-    } else {
-        res.render('report', output);
-    }
+    */
 };
+
+function getServerIds(servers) {
+
+    var ret = [];
+
+    for (var i = 0; servers && i < servers.length; i++) {
+        var tmp = { hostName: servers[i], id: 0 };
+        tmp.id = controller.getServerId(tmp);
+        if (tmp.id) {
+            ret.push(tmp.id);
+        }
+    }
+    return ret;
+}
 
 
 function sortServers(servers) {
@@ -154,105 +161,6 @@ function sortServers(servers) {
         }
 
     });
-}
-
-function combinedServers(body) {
-
-    log.log("POST Report: %j", body);
-    var ret = [];
-
-    if (body && body.servers && body.servers.length > 0)
-    {
-
-        var archived = nconf.get('archive');
-
-
-        for (var i = 0; i < archived.length; i++)
-        {
-            for (var j = 0; j < body.servers.length; j++)
-            {
-                if (archived[i].server == body.servers[j]) {
-
-                    ret.push(archived[i]);
-                    // log.log("Found: " + archived[i].server);
-                    // log.log(util.inspect(archived[i].data));
-
-                }
-            }
-        }
-
-        return actuallyCombine(ret);
-
-
-    } else if (body && body.start && body.end) {
-
-        // log.log("Archive request");
-        return nconf.get('archive');
-
-    } else {
-        // log.log("Current request");
-        return nconf.get('servers');
-    }
-
-    function actuallyCombine(aRet) {
-
-        // this isn't perfect
-
-        var curServers = nconf.get('servers');
-        for (var k = 0; k < curServers.length; k++)
-        {
-
-            for (var m = 0; m < aRet.length;m++) {
-
-                if (curServers[k].server == aRet[m].server)
-                {
-
-                    for (var n = 0; n < curServers[k].data.length; n++)
-                    {
-                        aRet[m].data.push(curServers[k].data[n]);
-
-                    }
-                    aRet[m].data = aRet[m].data.sort(function(a, b) {
-                       return a.time - b.time;
-                    });
-                    m = aRet.length;
-                }
-            }
-        }
-
-
-
-        return aRet;
-    }
-
-
-    // var archived = nconf.use('data').get('archive');
-
-    /*
-    var combined = [];
-
-    var addlater = [];
-
-    if (current.length >= archived.length) {
-        combined = current;
-    } else {
-        combined = archived;
-    }
-    for (var i = 0; i < combined.length; i++)
-    {
-        var found = -1;
-        for (var j = 0; j < current.length; j++)
-        {
-
-            if (current[j].server == combined[i].server) {
-                found = i;
-                // combine here based on which one needs to be first ie current.data should always be first
-            }
-        }
-        addlater.push(i);
-    }
-
-    */
 }
 
 

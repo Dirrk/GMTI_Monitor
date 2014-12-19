@@ -67,6 +67,7 @@ function strictWrapper() {
     app.set('port', settings.port || 4000);
     app.set('views', path.join(__dirname, 'views'));
     app.set('view engine', 'jade');
+    app.enable('trust proxy');
 
     // Connect / Express Middleware
     app.use(express.favicon(path.join(__dirname, "public/images/favicon.ico")));
