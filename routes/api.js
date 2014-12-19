@@ -141,7 +141,16 @@ function httpPerformRequest(server, cb) {
     }
 
 }
+
 **/
+
+
+exports.current = function (req, res) {
+
+
+    res.json(controller.current());
+
+};
 
 /**
  * /api/update receives data from servers
@@ -588,7 +597,11 @@ function handleDataRequest(options, res) {
         data: []
     };
 
-    controller.getData(options, function (err, data) {
+    controller.getData(options, function handleDataCallback(err, data) {
+
+        if (data && data.data && data.data[0]) {
+            log.debug("HandleDataRequest - FirstResult :: %j", data.data[0]);
+        }
         if (err) {
             log.error(err);
         } else {
@@ -596,7 +609,6 @@ function handleDataRequest(options, res) {
         }
         res.json(ret.data);
     });
-
 };
 
 

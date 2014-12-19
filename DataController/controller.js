@@ -336,7 +336,7 @@ function getCurrentMatchingData(options, next) {
 
     var data = filterDataByTimeAndDataTypes(newOptions.startTime, newOptions.endTime, getFieldsFromDataTypes(newOptions.dataTypes), _current.filter(function (curr) { return lookUp[curr.id]; } ));
 
-    log.trace("data: %j", data);
+    log.debug("data: %j", data);
 
 
     if (data.needMore === true && data.completedServerIds.length === newOptions.servers.length) {
@@ -397,13 +397,12 @@ function getFieldsFromDataTypes(dataTypes) {
 
 function constrainAndFilterData(timedData, start, end, dataTypes) {
 
-    log.trace("TimedData: %j", timedData);
+    log.debug("TimedData: %j", timedData);
     log.trace("DataTypes: %j", dataTypes);
 
     var first = findFirst(timedData, start);
     var last = findLast(timedData, first, end);
     var newData = cleanDataTypes(timedData.slice(first, last), dataTypes);
-
 
     return {
         first: first,
@@ -424,7 +423,7 @@ function cleanDataTypes(timedData, dataTypes) {
                 time: dataPoint.time
             };
             for (var i = 0; i < dataTypes.length; i++) {
-                if (dataPoint[dataTypes[i]]) {
+                if (dataPoint[dataTypes[i]] !== null || dataPoint[dataTypes[i]] !== undefined) {
                     newPoint[dataTypes[i]] = dataPoint[dataTypes[i]];
                 }
             }

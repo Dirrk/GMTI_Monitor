@@ -92,6 +92,7 @@ function strictWrapper() {
     // *** API Calls ***
     app.post('/api/update', api.update2);  // Servers send data
     app.post('/api/data', api.data2);  // called to get data about groups of servers
+    app.get('/api/current', api.current);
 
     // *** Legacy Dashboard call ***
     app.get('/api/data/:id', api.getData2); // called from built dashboards
