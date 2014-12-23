@@ -1712,7 +1712,8 @@ function findLast(timedData, startAt, stop) {
 exports.newServer = function newServer(server, cb) {
 
   var servers = controller.db().servers;
-  var id = servers[servers.length - 1].id + 1;
+  var id = 1;
+  if (servers.length != 0) { id = servers[servers.length - 1].id + 1; };
   var server = server;
   server.id = id;
   cb(null, server);

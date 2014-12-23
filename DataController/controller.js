@@ -397,7 +397,7 @@ function getFieldsFromDataTypes(dataTypes) {
 
 function constrainAndFilterData(timedData, start, end, dataTypes) {
 
-    log.debug("TimedData: %j", timedData);
+    log.trace("TimedData: %j", timedData);
     log.trace("DataTypes: %j", dataTypes);
 
     var first = findFirst(timedData, start);
