@@ -172,7 +172,7 @@ function safeHandler(dataId) {
                 // console.log("LegacyFixed " + ret[i].server);
             }
             importCurrentData(inData);
-            return ret;
+            return sortServers(ret);
 
         } else {
             return [];
